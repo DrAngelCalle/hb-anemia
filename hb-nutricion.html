@@ -997,6 +997,21 @@ const Clin = (() => {
   const lbl = (list, k) => (list.find((x) => x[0] === k) || [k, k])[1];
   const OTHER_LABS = ["reticulocitos", "frotis", "gota", "plomo"];
 
+  // Una atención por paciente por día: si hay repetidas, vale la más completa
+  function evScore(e) {
+    const res = e.res ? Object.keys(e.res).filter((k) => e.res[k] !== "" && e.res[k] != null && e.res[k] !== false).length : 0;
+    return (e.fua && e.fua.num ? 50 : 0) + (e.hb != null ? 10 : 0) + (e.dx ? 5 : 0) + res * 2 + (e.orders || []).length + (e.ref ? 3 : 0) + (e.ram ? 3 : 0) + (e.notes ? 1 : 0);
+  }
+  function onePerDay(evs) {
+    const m = new Map();
+    (evs || []).forEach((e) => { const o = m.get(e.date); if (!o || evScore(e) >= evScore(o)) m.set(e.date, e); });
+    return Array.from(m.values()).sort(byDate);
+  }
+  function dupGroups(list) {
+    const out = [];
+    list.forEach((p) => { if (p.example) return; const by = {}; (p.events || []).forEach((e, i) => { (by[e.date] = by[e.date] || []).push(i); }); Object.keys(by).forEach((d) => { if (by[d].length > 1) out.push({ p, date: d, idx: by[d] }); }); });
+    return out;
+  }
   function monthReport(list, per) {
     const rg = rangeOf(per), inR = (d) => !!d && d >= rg.from && d <= rg.to, ym = rg.key;
     const s3 = () => ({ ninos: new Set(), gest: new Set(), otros: new Set() });
@@ -1012,7 +1027,7 @@ const Clin = (() => {
     list.forEach((p) => {
       if (p.example) return;
       if (inR(p.createdDate)) R.nuevos++;
-      const evs = (p.events || []).slice().sort(byDate);
+      const evs = onePerDay(p.events);
       let lastDx = null, lastOrder = null;
       evs.forEach((e) => {
         if (!inR(e.date)) return;
@@ -1317,7 +1332,7 @@ const Clin = (() => {
   return { ALT, num, r1, f1, today, parseDate, addDays, addMonths, daysBetween, ageAt, ageLabel, altAdjust, hbAdjusted,
     GROUPS, groupOf, groupLabel, bandsOf, classify, FORMS, equivalents, plan, schedule, assess, HIS, hisDefaults, hisRows,
     norm, ymOf, byDate, matches, weeksAt, viewAt, LABS, RES, hasRes, ferritin, CHILD, BUCKETS, bucketOf, popOf, size3,
-    TARGET, isTarget, isSecond, teleTypes, mainType, COMORB, EFFECTS, MEDIDAS, AREAS, lbl,
+    TARGET, isTarget, isSecond, teleTypes, mainType, evScore, onePerDay, dupGroups, COMORB, EFFECTS, MEDIDAS, AREAS, lbl,
     PERIOD, rangeOf, periodOf, periodsUntil, REF_PROFILES, refProfileOf, FROTIS, LAB_TXT, labEval,
     PROFILES, setProfile, prof, NUTRI,
     monthReport, pendings, reportText, csvMonth };
@@ -1994,7 +2009,7 @@ const HBFua = (() => {
     const idx = pp.future ? 0 : C.daysBetween(pp.from, t) + 1, left = pp.future ? pp.days : pp.days - idx + 1, hoy = R.days[idx] || { c: 0, v: 0, o: 0 };
     const faltaC = Math.max(0, G.goalC - R.consult.meta), faltaS = Math.max(0, G.goalS - S.meta), PD = C.pendings(list, t);
     const todays = [];
-    list.forEach((p) => { if (!p.example) p.events.forEach((e) => { if (e.date === t) todays.push({ p, e }); }); });
+    list.forEach((p) => { if (!p.example) p.events.forEach((e, i) => { if (e.date === t) todays.push({ p, e, i }); }); });
     const pend = (title, items, row, empty) => `<div><h3>${title} (${items.length})</h3>${items.length ? `<ul class="rowlist">${items.slice(0, 10).map(row).join("")}</ul>${items.length > 10 ? `<p class="muted">y ${items.length - 10} más.</p>` : ""}` : `<p class="muted">${empty}</p>`}</div>`;
     const secondPend = P.secondKey === "tele"
       ? pend("Telemonitoreo de los días 7 a 15", PD.tele, (x) => `<li>${openBtn(x.p)} · día ${x.d} de tratamiento</li>`, "Ningún paciente en la ventana sin telemonitoreo.")
@@ -2015,8 +2030,9 @@ const HBFua = (() => {
       ${chartHtml(R, pp, G.goalC, idx)}
       <div class="actions"><button class="btn" data-act="route" data-to="reporte">Ver informe del periodo →</button></div>
     </section>
+    ${(() => { const n = C.dupGroups(list).reduce((t, g) => t + g.idx.length - 1, 0); return n ? `<div class="note warn"><b>${n} ${n === 1 ? "atención repetida" : "atenciones repetidas"} el mismo día.</b> En la meta cuenta una por paciente por día. <button type="button" class="linkbtn" data-act="route" data-to="ajustes">Revisar y eliminar en Ajustes</button></div>` : ""; })()}
     <section class="card"><h2>Atenciones de hoy (${todays.length})</h2>
-      ${todays.length ? `<ul class="rowlist">${todays.map(({ p, e }) => `<li>${openBtn(p)} · ${esc(e.type)}${e.hbAdj != null ? " · Hb ajustada " + C.f1(e.hbAdj) + " g/dL" : ""}${e.dx ? ' · <span class="code">' + esc(e.dx) + "</span>" : ""}${e.ref ? " · " + esc(e.ref) : ""}</li>`).join("")}</ul>` : `<p class="muted">Todavía no registra atenciones hoy. Busque al paciente y registre la atención desde su pestaña Atenciones.</p>`}
+      ${todays.length ? `<ul class="rowlist">${todays.map(({ p, e, i }) => `<li><button class="btn small" data-act="del-today" data-p="${esc(p.id)}" data-i="${i}" aria-label="Eliminar esta atención" style="float:right;color:var(--sev);border-color:var(--sev)">Eliminar</button>${openBtn(p)} · ${esc(e.type)}${e.hbAdj != null ? " · Hb ajustada " + C.f1(e.hbAdj) + " g/dL" : ""}${e.dx ? ' · <span class="code">' + esc(e.dx) + "</span>" : ""}${e.ref ? " · " + esc(e.ref) : ""}</li>`).join("")}</ul>` : `<p class="muted">Todavía no registra atenciones hoy. Busque al paciente y registre la atención desde su pestaña Atenciones.</p>`}
     </section>
     <section class="card"><h2>Pendientes de seguimiento</h2>
       ${PD.severe.length ? `<div class="note stop"><b>Anemia severa sin referencia registrada:</b> ${PD.severe.map((x) => openBtn(x.p)).join(", ")}. Refiera de inmediato a un establecimiento de mayor complejidad.</div>` : ""}
@@ -2064,7 +2080,11 @@ const HBFua = (() => {
   function viewAjustes() {
     const P = C.prof(), m = Store.meta(), refs = m.labRefs || {}, R0 = refs[refTab] || {}, L = license(), pp = currentPeriod();
     const v = (k, b) => (R0[k] && R0[k][b] != null ? R0[k][b] : "");
-    return `
+    const DG = C.dupGroups(Store.list()), nDup = DG.reduce((t, g) => t + g.idx.length - 1, 0);
+    return `${nDup ? `<section class="card"><h2>Atenciones repetidas</h2>
+      <p>Hay <b>${nDup}</b> atenciones de más: ${DG.length} ${DG.length === 1 ? "paciente tiene" : "veces un paciente tiene"} más de una atención el mismo día (${DG.slice(0, 4).map((g) => esc(g.p.name || "sin nombre") + ", " + fmtShort(g.date)).join("; ")}${DG.length > 4 ? "…" : ""}).</p>
+      <p class="muted">En las metas y el informe ya cuenta una sola por día. Puede eliminarlas: en cada día se conserva la atención con más datos.</p>
+      <div class="actions"><button class="btn danger" data-act="dup-clean">Eliminar ${nDup} repetidas</button></div></section>` : ""}
     ${PROFILE_FIXED ? "" : `<section class="card"><h2>Versión de la app</h2>
       <div class="grid"><label class="field" for="s-prof"><span>Contrato o servicio</span>${sel("s-prof", 'data-prof="1"', P.id, Object.keys(C.PROFILES).map((k) => [k, C.PROFILES[k].name + " · " + C.PROFILES[k].goalC + " consultas y " + C.PROFILES[k].goalS + " " + C.PROFILES[k].secondMany]))}</label></div>
       <p class="muted">Cambia la población objetivo, las metas y el formato del informe. Los pacientes registrados no cambian.</p></section>`}
@@ -2337,7 +2357,8 @@ const HBFua = (() => {
     if (x.nutri) bits.push(`<div><dt>Estado nutricional</dt><dd>${esc(C.lbl(C.NUTRI, x.nutri))}</dd></div>`);
     const reg = [x.consejHem ? "Consejería hierro hemínico" : "", x.hemDias !== "" && x.hemDias != null ? "Alimentos con hierro: " + x.hemDias + " d/sem" : "", x.consej ? "Consejería" : "", x.regHC ? "HC/SIHCE" : "", x.regHIS ? "HIS" : ""].filter(Boolean);
     if (reg.length) bits.push(`<div><dt>Consejería y registro</dt><dd>${reg.join(" · ")}</dd></div>`);
-    return `<article class="event"><header><b>${fmtDate(x.date)} · ${esc(x.type)}</b><span class="actions">${C.prof().noFua ? "" : `<button class="btn small" data-act="fua-open" data-i="${i}">`}${C.prof().noFua ? "" : `${x.fua && x.fua.num ? "FUA " + esc(x.fua.num) : "FUA"}</button>`}<button class="btn small" data-act="edit-event" data-i="${i}">Editar</button><button class="btn small" data-act="del-event" data-i="${i}">Quitar</button></span></header>
+    const rep = cur && cur.events.filter((y) => y.date === x.date).length > 1;
+    return `<article class="event"><header><b>${fmtDate(x.date)} · ${esc(x.type)}${rep ? ' <span class="tag warn">Repetida: hay otra atención este día</span>' : ""}</b><span class="actions">${C.prof().noFua ? "" : `<button class="btn small" data-act="fua-open" data-i="${i}">`}${C.prof().noFua ? "" : `${x.fua && x.fua.num ? "FUA " + esc(x.fua.num) : "FUA"}</button>`}<button class="btn small" data-act="edit-event" data-i="${i}">Editar</button><button class="btn small" data-act="del-event" data-i="${i}" style="color:var(--sev);border-color:var(--sev)">Eliminar</button></span></header>
       <dl>
         <div><dt>Hb observada / ajustada</dt><dd>${C.f1(x.hb)} / ${C.f1(x.hbAdj)} g/dL</dd></div>
         <div><dt>Clasificación</dt><dd>${esc(x.clsLabel || "—")}</dd></div>
@@ -2811,6 +2832,16 @@ const HBFua = (() => {
   function cleanRes(r) { const o = {}; Object.keys(r || {}).forEach((k) => { if (r[k] !== "" && r[k] != null && r[k] !== false) o[k] = r[k]; }); return o; }
   function saveEvent() {
     const p = cur, d = draft, t = C.today(), date = C.parseDate(d.date) ? d.date : t;
+    const same = p.events.findIndex((e, i) => i !== d.i && e.date === date);
+    if (same >= 0) {
+      const e = p.events[same];
+      $("modal-body").innerHTML = `<h2>Ya hay una atención de ${esc(p.name || "este paciente")} el ${esc(fmtDate(date))}</h2><p>${esc(e.type)}${e.hbAdj != null ? " · Hb ajustada " + C.f1(e.hbAdj) + " g/dL" : ""}${e.dx ? " · " + esc(e.dx) : ""}. Se registra una sola atención por paciente por día: edite esa atención para agregar o corregir datos.</p>
+        <div class="actions"><button class="btn primary" id="m-yes">Editar esa atención</button><button class="btn" id="m-no">Cancelar</button></div>`;
+      $("modal").hidden = false;
+      $("m-yes").onclick = () => { closeModal(); editEvent(same); };
+      $("m-no").onclick = closeModal; $("m-no").focus();
+      return;
+    }
     const hb = C.num(d.hb), w = C.num(d.weight), h = C.num(d.height), adh = C.num(d.adherence);
     const others = p.events.filter((e, i) => i !== d.i);
     const firstHb = hb != null && (p.hb === "" || p.hb == null);
@@ -3134,8 +3165,23 @@ const HBFua = (() => {
     else if (a === "mode") { setP("mode", b.dataset.to); render(false); }
     else if (a === "save-event") saveEvent();
     else if (a === "edit-event") editEvent(Number(b.dataset.i));
+    else if (a === "del-today") {
+      const p = Store.list().find((x) => x.id === b.dataset.p), i = Number(b.dataset.i), e = p && p.events[i];
+      if (!e) return;
+      confirmBox("¿Eliminar la atención de " + (p.name || "este paciente") + " (" + e.type + ", " + fmtDate(e.date) + ")? No se puede deshacer.", "Eliminar atención", () => { p.events.splice(i, 1); Store.save(p); render(false); toast("Atención eliminada."); });
+    }
+    else if (a === "dup-clean") {
+      const G = C.dupGroups(Store.list()); if (!G.length) return;
+      const n = G.reduce((t, g) => t + g.idx.length - 1, 0);
+      confirmBox("¿Eliminar " + n + " atenciones repetidas? En cada día se conserva la atención con más datos (Hb, diagnóstico, resultados, FUA).", "Eliminar repetidas", () => {
+        const touched = new Set();
+        G.forEach((g) => { const keep = g.idx.reduce((a, b) => (C.evScore(g.p.events[b]) >= C.evScore(g.p.events[a]) ? b : a)); g.p._drop = (g.p._drop || []).concat(g.idx.filter((k) => k !== keep)); touched.add(g.p); });
+        touched.forEach((p) => { const drop = new Set(p._drop); delete p._drop; p.events = p.events.filter((e, k) => !drop.has(k)); Store.save(p); });
+        render(false); toast(n + " atenciones repetidas eliminadas.");
+      });
+    }
     else if (a === "cancel-edit") { draft = blankDraft(); dOpen = {}; render(false); }
-    else if (a === "del-event") confirmBox("¿Quitar esta atención del historial?", "Quitar", () => { cur.events.splice(Number(b.dataset.i), 1); draft = blankDraft(); Store.save(cur); render(false); });
+    else if (a === "del-event") confirmBox("¿Eliminar la atención del " + fmtDate((cur.events[Number(b.dataset.i)] || {}).date) + "? No se puede deshacer.", "Eliminar atención", () => { cur.events.splice(Number(b.dataset.i), 1); draft = blankDraft(); Store.save(cur); render(false); });
     else if (a === "lab-refer") { const L = draftLab(); draft.ref = "Referencia"; draft.refReason = L ? L.referDx.map((x) => x.name).join(", ") : draft.refReason; dOpen.ref = true; render(true); const el = $("e-refDest"); if (el) el.focus(); }
     else if (a === "ref-copy") { const refs = Object.assign({}, Store.meta().labRefs || {}), src = refs[refTab] || {}; C.REF_PROFILES.forEach(([k]) => { if (k !== refTab) refs[k] = JSON.parse(JSON.stringify(src)); }); Store.setMeta("labRefs", refs); toast("Valores copiados a los otros grupos."); }
     else if (a === "quick-orders") { ["hemograma", "ferritina", "pcr", "parasito"].forEach((k) => { if (!draft.orders.includes(k)) draft.orders.push(k); }); render(true); }

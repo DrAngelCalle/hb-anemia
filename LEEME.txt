@@ -1,0 +1,14 @@
+APPS HB · SITIO WEB
+===================
+index.html          Portada para elegir la app
+hb-lima-norte.html  HB Lima Norte
+hb-lima-centro.html HB Lima Centro
+hb-nutricion.html   HB Nutrición
+
+Activación: cada app muestra el código del equipo (navegador). El responsable genera la
+clave con su generador privado; la clave sirve solo para ese navegador y esa app, y dura
+40 días. Después se crea un PIN de 6 dígitos (5 intentos fallidos = espera creciente).
+
+Datos: los pacientes se guardan solo en el navegador de cada equipo, por separado para
+cada app. Exporte respaldos desde Ajustes. Borrar los datos del sitio en el navegador
+borra también la clave y los pacientes.

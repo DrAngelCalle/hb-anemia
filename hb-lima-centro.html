@@ -520,6 +520,24 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 .seg label { white-space: normal; overflow-wrap: anywhere; padding: 10px 8px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .seg label { position: relative; } .seg input { left: 0; top: 0; width: 1px; height: 1px; margin: 0; }
 
+/* Identificación: fotos del paciente y del DNI */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.idgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.idslot { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.idslot figcaption small { display: block; color: var(--muted); }
+.idimg { aspect-ratio: 1.58; border-radius: 10px; background: var(--accent-soft); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-size: 13px; border: 1px solid var(--line); }
+.idimg.face { aspect-ratio: 1; max-width: 180px; }
+.idimg img { width: 100%; height: 100%; object-fit: cover; }
+.idslot label.btn { cursor: pointer; }
+.idslot label.btn:has(+ input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.idstrip { display: grid; grid-template-columns: 56px 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; margin: 10px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.idstrip .idimg.sm { width: 56px; height: 56px; aspect-ratio: 1; border-radius: 50%; font-size: 22px; font-weight: 700; color: var(--accent); }
+.idtxt { min-width: 0; display: flex; flex-direction: column; }
+.idtxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idtxt span { color: var(--muted); font-size: 13px; }
+.idacts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+@media (min-width: 560px) { .idstrip { grid-template-columns: 56px 1fr auto; } .idacts { grid-column: auto; } }
+
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
@@ -905,7 +923,7 @@ const Clin = (() => {
   function matches(p, q) {
     const t = norm(q).split(/\s+/).filter(Boolean);
     if (!t.length) return true;
-    const hay = norm(p.name) + " " + (p.dni || "") + " " + norm(p.hc) + " " + (p.phone1 || "") + " " + (p.phone2 || "");
+    const hay = norm(p.name) + " " + (p.dni || "") + " " + norm(p.hc) + " " + (p.phone1 || "") + " " + (p.phone2 || "") + " " + norm(p.madreNombre) + " " + (p.madreDni || "");
     return t.every((x) => hay.includes(x));
   }
   // Semanas de gestación proyectadas desde la fecha en que se registraron
@@ -1095,6 +1113,42 @@ const Clin = (() => {
   const lbl = (list, k) => (list.find((x) => x[0] === k) || [k, k])[1];
   const OTHER_LABS = ["reticulocitos", "frotis", "gota", "plomo"];
 
+  /* Lectura del DNI peruano a partir del texto reconocido en la foto.
+     1) Zona MRZ del reverso (3 líneas con «<»): DNI, apellidos, nombres, nacimiento y sexo.
+     2) Si no hay MRZ, etiquetas del anverso: «Primer Apellido», «Segundo Apellido», «Pre Nombres», «Fecha de Nacimiento», «Sexo». */
+  function parseDni(text, todayIso) {
+    const out = { dni: "", apP: "", apM: "", nombres: "", dob: "", sex: "", source: "" };
+    const raw = String(text || "").replace(/\r/g, "");
+    const yy = +String(todayIso || new Date().toISOString()).slice(2, 4);
+    const lines = raw.split("\n").map((l) => l.toUpperCase().replace(/[«‹]/g, "<").replace(/\s+/g, "")).filter(Boolean);
+    const mrz = lines.map((l) => l.replace(/[^A-Z0-9<]/g, "")).filter((l) => (l.match(/</g) || []).length >= 3 && l.length >= 20);
+    const L1 = mrz.find((l) => /^I[<D]?PER/.test(l) || /^IDPER/.test(l));
+    if (L1) {
+      const m = L1.replace(/^I[<D]?PER/, "").match(/\d{8}/); if (m) out.dni = m[0];
+      const i = mrz.indexOf(L1);
+      const L2 = mrz.slice(i + 1).find((l) => /^\d{6}\d?[MF<]/.test(l));
+      if (L2) { const b = L2.slice(0, 6), sx = L2.match(/^\d{7}([MF])/); out.dob = (+b.slice(0, 2) > yy ? "19" : "20") + b.slice(0, 2) + "-" + b.slice(2, 4) + "-" + b.slice(4, 6); if (sx) out.sex = sx[1]; }
+      const L3 = mrz.slice(i + 1).find((l) => /^[A-Z]+<[A-Z<]*<<[A-Z]/.test(l) && !/\d/.test(l));
+      if (L3) {
+        const [sur, giv] = L3.split(/<<+/, 2).length === 2 ? [L3.slice(0, L3.indexOf("<<")), L3.slice(L3.indexOf("<<") + 2)] : [L3, ""];
+        const sp = sur.split("<").filter(Boolean); out.apP = sp[0] || ""; out.apM = sp.slice(1).join(" ");
+        out.nombres = giv.split("<").filter(Boolean).join(" ");
+      }
+      out.source = "mrz";
+      if (out.dni || out.apP) return out;
+    }
+    // Anverso: valor en la misma línea tras la etiqueta, o en la línea siguiente
+    const T = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+    const after = (re) => { for (let k = 0; k < T.length; k++) { if (re.test(T[k])) { const rest = T[k].replace(re, "").replace(/^[\s:.\-]+/, "").trim(); if (/[A-ZÁÉÍÓÚÑ]{2}/i.test(rest)) return rest; const nx = T[k + 1] || ""; if (!/apellido|nombre|nacimiento|sexo|estado|dni|fecha/i.test(nx)) return nx; } } return ""; };
+    out.apP = after(/primer\s*apellido/i).toUpperCase(); out.apM = after(/segundo\s*apellido/i).toUpperCase(); out.nombres = after(/pre\s*nombres|prenombres|nombres/i).toUpperCase();
+    const fd = raw.match(/nacimiento[^\d]{0,40}(\d{2})[\s/.\-]+(\d{2})[\s/.\-]+(\d{4})/i) || raw.match(/\b(\d{2})[\s/.\-](\d{2})[\s/.\-]((?:19|20)\d{2})\b/);
+    if (fd) out.dob = fd[3] + "-" + fd[2] + "-" + fd[1];
+    const sx = raw.match(/sexo[^A-Z]{0,6}\b([MF])\b/i); if (sx) out.sex = sx[1].toUpperCase();
+    const dn = raw.match(/DNI[^\d]{0,12}(\d{8})/i) || raw.match(/\b(\d{8})\s*-\s*\d\b/) || raw.match(/\b(\d{8})\b/);
+    if (dn) out.dni = dn[1];
+    out.source = out.dni || out.apP ? "frente" : "";
+    return out;
+  }
   // Una atención por paciente por día: si hay repetidas, vale la más completa
   function evScore(e) {
     const res = e.res ? Object.keys(e.res).filter((k) => e.res[k] !== "" && e.res[k] != null && e.res[k] !== false).length : 0;
@@ -1430,7 +1484,7 @@ const Clin = (() => {
   return { ALT, num, r1, f1, today, parseDate, addDays, addMonths, daysBetween, ageAt, ageLabel, altAdjust, hbAdjusted,
     GROUPS, groupOf, groupLabel, bandsOf, classify, FORMS, equivalents, plan, schedule, assess, HIS, hisDefaults, hisRows,
     norm, ymOf, byDate, matches, weeksAt, viewAt, LABS, RES, hasRes, ferritin, CHILD, BUCKETS, bucketOf, popOf, size3,
-    TARGET, isTarget, isSecond, teleTypes, mainType, evScore, onePerDay, dupGroups, COMORB, EFFECTS, MEDIDAS, AREAS, lbl,
+    TARGET, isTarget, isSecond, teleTypes, mainType, evScore, onePerDay, dupGroups, parseDni, COMORB, EFFECTS, MEDIDAS, AREAS, lbl,
     PERIOD, rangeOf, periodOf, periodsUntil, REF_PROFILES, refProfileOf, FROTIS, LAB_TXT, labEval,
     PROFILES, setProfile, prof, NUTRI,
     monthReport, pendings, reportText, csvMonth };
@@ -1547,7 +1601,7 @@ const HBFua = (() => {
       sex: p.sex === "M" ? "M" : "F", dob: p.dob || "", hc: p.hc || "", etnia: cfg.etnia, gest, puerp, fpp: p.fpp || "",
       destino: ev.ref === "Referencia" ? "referido" : "cita", refA: "consulta", refRenipress: "", refIpress: ev.ref ? (ev.refDest || "") : "", refHoja: "",
       peso: ev.weight != null ? String(ev.weight) : p.weight || "", talla: ev.height != null ? String(ev.height) : p.height || "", pa: "", cpn: "", cred: "",
-      eg: gest ? egAt(p, ev.date) : "", dxs: [], meds: [], procs: [], sub: [], obs: "",
+      eg: gest ? egAt(p, ev.date) : "", repNombre: ["301", "302"].includes(rmcv(p, ev.date)) ? String(p.madreNombre || "").toUpperCase() : "", repDni: ["301", "302"].includes(rmcv(p, ev.date)) ? p.madreDni || "" : "", dxs: [], meds: [], procs: [], sub: [], obs: "",
       resp: { dni: cfg.dni, nombre: cfg.nombre, coleg: cfg.coleg, prof: cfg.prof, esp: cfg.esp, rne: cfg.rne, egresado: cfg.egresado }, checked: false,
     };
     // Diagnósticos
@@ -1663,7 +1717,7 @@ const HBFua = (() => {
     <tr><th colspan="4">N° DE DNI</th><th colspan="10">NOMBRE DEL RESPONSABLE DE LA ATENCIÓN</th><th colspan="6">N° DE COLEGIATURA</th></tr>
     <tr><td colspan="4" class="t v">${e(f.resp.dni)}</td><td colspan="10" class="v">${e(String(f.resp.nombre || "").toUpperCase())}</td><td colspan="6" class="t v">${e(f.resp.coleg)}</td></tr>
     <tr><th colspan="4">RESPONSABLE DE LA ATENCIÓN</th><td colspan="2" class="t v">${e(prof)}</td><th colspan="3">ESPECIALIDAD</th><td colspan="4" class="v">${e(f.resp.esp)}</td><th colspan="2">N° RNE</th><td colspan="2" class="v">${e(f.resp.rne)}</td><th colspan="2">EGRESADO</th><td class="v">${e(f.resp.egresado)}</td></tr>
-    <tr><td colspan="7" class="sig">FIRMA Y SELLO DEL RESPONSABLE DE LA ATENCIÓN</td><td colspan="9" class="sig">FIRMA DEL ASEGURADO / REPRESENTANTE · NOMBRES Y APELLIDOS · DNI</td><td colspan="4" class="sig">HUELLA DIGITAL</td></tr>
+    <tr><td colspan="7" class="sig">FIRMA Y SELLO DEL RESPONSABLE DE LA ATENCIÓN</td><td colspan="9" class="sig">${f.repNombre || f.repDni ? `<b class="v">${e(f.repNombre)}${f.repDni ? " · DNI " + e(f.repDni) : ""}</b><br>` : ""}FIRMA DEL ASEGURADO / REPRESENTANTE · NOMBRES Y APELLIDOS · DNI</td><td colspan="4" class="sig">HUELLA DIGITAL</td></tr>
     </table></div>`;
     const medCell = (m) => `<td colspan="2" class="v">${e(m.code)}</td><td colspan="4" class="v">${e(m.name)}</td><td class="t v">${e(m.qty)}</td><td class="t v">${e(m.qty)}</td><td class="t v">${e(m.dx)}</td>`;
     const prCell = (x) => `<td colspan="2" class="v">${e(x.code)}</td><td colspan="4" class="v">${e(x.name)}</td><td class="t v">${e(x.ind)}</td><td class="t v">${e(x.eje)}</td><td class="t v">${e(x.dx)}</td><td class="t v">${e(x.res)}</td>`;
@@ -1679,7 +1733,7 @@ const HBFua = (() => {
     <tr><th colspan="2">CÓDIGO</th><th colspan="4">NOMBRE</th><th>IND</th><th>EJE</th><th>DX</th><th>RES</th><th colspan="2">CÓDIGO</th><th colspan="4">NOMBRE</th><th>IND</th><th>EJE</th><th>DX</th><th>RES</th></tr>
     ${two(f.sub.map((s) => Object.assign({ res: "" }, s)), 6, prCell)}</table>
     <div class="sp"></div><table>${head("OBSERVACIONES")}<tr><td colspan="20" style="height:60px;vertical-align:top" class="v">${e(f.obs)}</td></tr>
-    <tr><td colspan="6" class="sig">FIRMA Y SELLO DE LABORATORIO / FARMACIA (SEGÚN CORRESPONDA)</td><td colspan="5" class="sig">FIRMA Y SELLO DEL PROFESIONAL QUE REALIZA LA ATENCIÓN</td><td colspan="6" class="sig">FIRMA DEL ASEGURADO / REPRESENTANTE · NOMBRES Y APELLIDOS · DNI</td><td colspan="3" class="sig">HUELLA DIGITAL</td></tr></table></div>`;
+    <tr><td colspan="6" class="sig">FIRMA Y SELLO DE LABORATORIO / FARMACIA (SEGÚN CORRESPONDA)</td><td colspan="5" class="sig">FIRMA Y SELLO DEL PROFESIONAL QUE REALIZA LA ATENCIÓN</td><td colspan="6" class="sig">${f.repNombre || f.repDni ? `<b class="v">${e(f.repNombre)}${f.repDni ? " · DNI " + e(f.repDni) : ""}</b><br>` : ""}FIRMA DEL ASEGURADO / REPRESENTANTE · NOMBRES Y APELLIDOS · DNI</td><td colspan="3" class="sig">HUELLA DIGITAL</td></tr></table></div>`;
     return `<!DOCTYPE html><html lang="es-PE"><head><meta charset="utf-8"><title>FUA ${e(n.join("-"))}</title><style>${css}</style></head><body>${p1}${p2}</body></html>`;
   }
 
@@ -1706,7 +1760,7 @@ const HBFua = (() => {
   const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1" });
   const blankPatient = () => ({ id: "", ym: "", createdDate: C.today(), updated: 0, name: "", hc: "", dob: "", dni: "", address: "", altitude: "", email: "", phone1: "", phone2: "",
     refName: "", refPhone: "", sex: "F", weight: "", height: "", allergy: "no", allergyText: "", preg: false, puerp: false, fertile: false, preterm: false,
-    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", events: [], his: blankHis() });
+    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", photos: {}, hisFor: "", events: [], his: blankHis() });
   const blankDraft = () => ({ i: null, date: C.today(), type: C.mainType(), hemDias: "", consejHem: false, hb: "", weight: "", height: "", adherence: "", dx: "auto", orders: [], res: {}, resEval: false,
     adverse: [], ram: false, ramNote: "", ref: "", refDest: "", refReason: "", notes: "",
     comorb: [], comorbTx: "", tol: "", medidas: [], medidasTxt: "", coord: [], consej: false, regHC: false, regHIS: false, nutri: "" });
@@ -1794,7 +1848,11 @@ const HBFua = (() => {
         get: (store, k) => tx(store, "readonly", (o) => o.get(k)),
         put: (store, v, k) => tx(store, "readwrite", (o) => (k === undefined ? o.put(v) : o.put(v, k))),
         del: (store, k) => tx(store, "readwrite", (o) => o.delete(k)),
-        clear: async () => { await tx("patients", "readwrite", (o) => o.clear()); await tx("kv", "readwrite", (o) => o.clear()); } };
+        clear: async () => {   // conserva las fotos
+          await tx("patients", "readwrite", (o) => o.clear());
+          const ks = (await tx("kv", "readonly", (o) => o.getAllKeys())) || [];
+          for (const k of ks) if (String(k).indexOf("foto:") !== 0) await tx("kv", "readwrite", (o) => o.delete(k));
+        } };
     })();
     async function readLocal() {   // todo lo guardado en el dispositivo: IndexedDB + copia antigua de localStorage
       const j = { meta: null, patients: [], notes: {}, legacy: false };
@@ -1972,8 +2030,28 @@ const HBFua = (() => {
       if (timers.size || queued.size || st.saving) return { tone: "busy", text: "Guardando…" };
       return st.mode === "cloud" ? { tone: "ok", text: "Guardado en su cuenta" } : STANDALONE ? { tone: "ok", text: "Guardado en el equipo" } : { tone: "warn", text: "Guardado solo en este navegador" };
     }
+    // Fotos (rostro y DNI): aparte de la ficha para que el respaldo siga liviano
+    const photoKey = (pid, kind) => String(pid).replace(/[^A-Za-z0-9_-]/g, "_") + "_" + kind;
+    async function photoGet(pid, kind) {
+      try {
+        if (st.mode === "cloud") { const d = await reg().collection("fotos").doc(photoKey(pid, kind)).get(); return d.exists ? (d.data() || {}).d || null : null; }
+        if (await Local.open()) return (await Local.get("kv", "foto:" + photoKey(pid, kind))) || null;
+      } catch (e) { /* sin foto */ }
+      return null;
+    }
+    async function photoPut(pid, kind, dataUrl) {
+      if (st.mode === "cloud") { await reg().collection("fotos").doc(photoKey(pid, kind)).set({ d: dataUrl, t: Date.now() }); return true; }
+      if (await Local.open()) { await Local.put("kv", dataUrl, "foto:" + photoKey(pid, kind)); return true; }
+      throw new Error("Este equipo no permite guardar fotos.");
+    }
+    async function photoDel(pid, kind) {
+      try {
+        if (st.mode === "cloud") { await reg().collection("fotos").doc(photoKey(pid, kind)).delete(); return; }
+        if (await Local.open()) await Local.del("kv", "foto:" + photoKey(pid, kind));
+      } catch (e) { /* nada que borrar */ }
+    }
     return { st, init, save, create, remove, discardIfEmpty, list, get, children, meta: () => meta, setMeta, loadNotes, getNotes, addNote, delNote,
-      exportAll, importAll, status, retry, flush, count: () => patients.size };
+      exportAll, importAll, status, retry, flush, count: () => patients.size, photoGet, photoPut, photoDel };
   })();
 
   /* ================= Estado de la interfaz ================= */
@@ -2298,6 +2376,7 @@ const HBFua = (() => {
     const p = D.p, woman = p.sex === "F" && (!D.age || D.age.years >= 10), infant = D.age && D.age.months < 6;
     return `
     ${p.example ? `<div class="note">Esta ficha muestra <b>datos de ejemplo</b> y no se guarda. Use «Nuevo paciente» para registrar los suyos.</div>` : ""}
+    ${idCard(D)}
     <section class="card"><h2>Datos del paciente</h2>
       <div class="grid">
         ${inp("name", "Nombre completo", 'autocomplete="off"')}
@@ -2578,7 +2657,8 @@ const HBFua = (() => {
     <section class="card"><h3>Del asegurado</h3>
       <div class="grid">${fld("TDI", "tdi", f.tdi)}${fld("N° de documento", "doc", f.doc, { mode: "numeric" })}${fld("SIS: DIRESA / otros", "sisDisa", f.sisDisa)}${fld("SIS: número", "sisNum", f.sisNum)}
         ${fld("Apellido paterno", "apP", f.apP)}${fld("Apellido materno", "apM", f.apM)}${fld("Nombres", "nombres", f.nombres)}${fld("N° de historia clínica", "hc", f.hc)}${fld("Etnia", "etnia", f.etnia)}
-        ${f.gest ? fld("Fecha probable de parto", "fpp", f.fpp, { type: "date" }) : ""}</div>
+        ${f.gest ? fld("Fecha probable de parto", "fpp", f.fpp, { type: "date" }) : ""}
+        ${["301", "302"].includes(f.prest) ? fld("Representante (madre o apoderado)", "repNombre", f.repNombre) + fld("DNI del representante", "repDni", f.repDni, { mode: "numeric" }) : ""}</div>
     </section>
     <section class="card"><h3>Signos vitales y otros datos</h3>
       <div class="grid">${fld("Peso (kg)", "peso", f.peso, { mode: "decimal" })}${fld("Talla (cm)", "talla", f.talla, { mode: "decimal" })}${fld("P.A. (mmHg)" + (adult ? "" : " (opcional)"), "pa", f.pa, { ph: "120/80" })}
@@ -2744,7 +2824,15 @@ const HBFua = (() => {
     const suppOpts = [["auto", "Según la ficha" + (r.def.supp ? " (" + r.def.supp + ")" : " (ninguna)")], ["none", "No registrar suplementación"],
       ["99199.17", "99199.17 · Hierro (sulfato ferroso / polimaltosado)"], ["99199.19", "99199.19 · Multimicronutrientes"], ["99199.26", "99199.26 · Sulfato ferroso y ácido fólico"]];
     const labOpt = (l) => (l === "" ? "Vacío" : l === "LEV" ? "LEV · Leve" : l === "MOD" ? "MOD · Moderada" : l === "SEV" ? "SEV · Severa" : l === "PR" ? "PR · Paciente recuperado" : "RF · Referencia");
+    const evs = D.p.events.map((e, i) => [e, i]).sort((a, b) => (a[0].date < b[0].date ? 1 : -1));
+    const hi = D.p.events.findIndex((e) => e.id === D.p.hisFor);
+    const saved = evs.filter(([e]) => e.his);
     return `
+    ${evs.length ? `<section class="card"><h2>HIS de cada atención</h2>
+      <label class="field" for="h-ev"><span>Atención</span>${sel("h-ev", 'data-his-ev="1"', String(hi), (hi < 0 ? [["-1", "Elija una atención"]] : []).concat(evs.map(([e, i]) => [String(i), fmtDate(e.date) + " · " + e.type + (e.his ? " · HIS guardado" : "")])))}</label>
+      <div class="actions"><button class="btn primary" data-act="his-save" ${hi < 0 ? "disabled" : ""}>Guardar HIS en la ficha del paciente</button></div>
+      ${saved.length ? `<h3>HIS guardados (${saved.length})</h3><ul class="rowlist">${saved.map(([e, i]) => `<li><button type="button" class="linkbtn" data-act="his-pick" data-i="${i}">${fmtDate(e.date)} · ${esc(e.type)}</button> · ${esc((e.his.rows || []).map((r) => r.code + (r.lab ? " " + r.lab : "")).join(", ") || "sin códigos")}</li>`).join("")}</ul>` : `<p class="muted">Aún no hay HIS guardados. Cada atención nueva guarda el suyo automáticamente.</p>`}
+    </section>` : ""}
     <section class="card"><h2>Registro HIS de la atención</h2>
       <p class="muted">Códigos del Manual de registro y codificación de anemia 2024. Al guardar una atención, esta pestaña toma su diagnóstico, exámenes y tipo; ajuste lo que haga falta y transcriba.</p>
       <h3>Diagnóstico (CIE-10)</h3>
@@ -2777,11 +2865,152 @@ const HBFua = (() => {
     </section>`;
   }
 
+  /* ================= Identificación: fotos del paciente y del DNI ================= */
+  const KINDS = { rostro: "Foto del paciente", dni: "DNI del paciente", dniMadre: "DNI de la madre o apoderado" };
+  const isMinor = (D) => !D.age || D.age.years < 18;
+  const titleCase = (s) => String(s || "").toLowerCase().replace(/(^|\s)\S/g, (m) => m.toUpperCase());
+  const ocrOk = () => !!(window.AndroidBridge && window.AndroidBridge.ocrImage && !window.AndroidBridge.isWeb);
+  function photoSlot(p, kind) {
+    const has = p.photos && p.photos[kind], dniK = kind !== "rostro";
+    return `<figure class="idslot">
+      <div class="idimg ${kind === "rostro" ? "face" : ""}">${has ? `<img data-photo="${kind}" alt="${esc(KINDS[kind])}">` : `<span>Sin foto</span>`}</div>
+      <figcaption><b>${esc(KINDS[kind])}</b>${has ? `<small>Tomada el ${esc(fmtShort(has))}</small>` : ""}</figcaption>
+      <div class="actions">
+        <label class="btn small" for="cap-${kind}">${has ? "Cambiar" : "Tomar foto"}</label>
+        <input type="file" id="cap-${kind}" accept="image/*" capture="${kind === "rostro" ? "user" : "environment"}" data-cap="${kind}" class="vh">
+        ${has && dniK && ocrOk() ? `<button class="btn small" data-act="id-read" data-kind="${kind}">Leer datos</button>` : ""}
+        ${has ? `<button class="btn small" data-act="id-del" data-kind="${kind}">Quitar</button>` : ""}
+      </div></figure>`;
+  }
+  function idCard(D) {
+    const p = D.p; if (p.example) return "";
+    return `<section class="card" id="idcard"><h2>Identificación</h2>
+      <p class="muted">${ocrOk() ? "Al fotografiar un DNI, la app lee el número, los apellidos, los nombres, la fecha de nacimiento y el sexo para llenar la ficha. Funciona mejor con el reverso (las líneas con «<»)." : "Las fotos sirven para identificar al paciente en cada atención. La lectura automática del DNI está en el APK."}</p>
+      <div class="idgrid">${photoSlot(p, "rostro")}${photoSlot(p, "dni")}${isMinor(D) ? photoSlot(p, "dniMadre") : ""}</div>
+      ${isMinor(D) ? `<div class="grid">${inp("madreNombre", "Nombre de la madre o apoderado", 'autocomplete="off"')}${inp("madreDni", "DNI de la madre o apoderado", 'inputmode="numeric" maxlength="8" autocomplete="off"')}</div>` : ""}
+      <p class="muted">Las fotos se guardan solo en este equipo, aparte del respaldo, y no se envían por correo.</p>
+    </section>`;
+  }
+  function idStrip(D) {
+    const p = D.p; if (p.example) return "";
+    const m = isMinor(D) && (p.madreNombre || p.madreDni);
+    return `<section class="idstrip" aria-label="Identificación del paciente">
+      <div class="idimg face sm">${p.photos && p.photos.rostro ? `<img data-photo="rostro" alt="Foto de ${esc(p.name || "el paciente")}">` : `<span aria-hidden="true">${esc((p.name || "?").trim().charAt(0).toUpperCase())}</span>`}</div>
+      <div class="idtxt"><b>${esc(p.name || "Sin nombre")}</b><span>${p.dni ? "DNI " + esc(p.dni) : "Sin DNI"}${p.hc ? " · HC " + esc(p.hc) : ""}</span>${m ? `<span>Madre: ${esc(p.madreNombre || "—")}${p.madreDni ? " · DNI " + esc(p.madreDni) : ""}</span>` : ""}</div>
+      <div class="idacts"><button class="btn small" data-act="id-open">Fotos y DNI</button><button class="btn small" data-act="historia">Historia (PDF)</button></div>
+    </section>`;
+  }
+  // Carga las fotos en las imágenes visibles (se leen del almacenamiento cuando hacen falta)
+  async function idPaint(root) {
+    if (!cur) return; const pid = cur.id;
+    for (const img of (root || document).querySelectorAll("img[data-photo]")) {
+      if (img.src) continue;
+      const d = await Store.photoGet(pid, img.dataset.photo);
+      if (d && cur && cur.id === pid) img.src = d; else if (!d) img.replaceWith(Object.assign(document.createElement("span"), { textContent: "Sin foto" }));
+    }
+  }
+  function idModal() {
+    const D = derive(cur);
+    $("modal-body").innerHTML = `<div class="idgrid">${photoSlot(cur, "rostro")}${photoSlot(cur, "dni")}${isMinor(D) ? photoSlot(cur, "dniMadre") : ""}</div>
+      <div class="actions"><button class="btn" id="m-no">Cerrar</button></div>`;
+    $("modal").hidden = false; $("m-no").onclick = closeModal; idPaint($("modal-body"));
+  }
+  function idRefreshModal() { if (!$("modal").hidden && $("modal-body").querySelector(".idgrid")) idModal(); }
+  // Reduce la foto: rostro 640 px, DNI 1400 px (legible) en JPEG
+  function shrink(file, max, q) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", q)); };
+      im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("imagen")); };
+      im.src = url;
+    });
+  }
+  async function takePhoto(kind, file) {
+    const p = cur; if (!p) return;
+    try {
+      const data = await shrink(file, kind === "rostro" ? 640 : 1400, kind === "rostro" ? 0.78 : 0.72);
+      await Store.photoPut(p.id, kind, data);
+      p.photos = Object.assign({}, p.photos || {}, { [kind]: C.today() }); Store.save(p);
+      render(true); idRefreshModal(); toast(KINDS[kind] + " guardada.");
+      if (kind !== "rostro" && ocrOk()) ocrPhoto(kind, data);
+    } catch (e) { toast("No se pudo guardar la foto: " + (e && e.message ? e.message : "intente de nuevo") + "."); }
+  }
+  // Lectura del DNI con el reconocimiento de texto del teléfono (APK)
+  const ocrWait = {};
+  window.HBOcrDone = (id, text) => { const f = ocrWait[id]; delete ocrWait[id]; if (f) f(text || ""); };
+  async function ocrPhoto(kind, data) {
+    const p = cur; if (!p || !ocrOk()) return;
+    const img = data || (await Store.photoGet(p.id, kind)); if (!img) return;
+    toast("Leyendo el DNI…");
+    const id = "o" + Date.now();
+    const text = await new Promise((res) => { ocrWait[id] = res; try { window.AndroidBridge.ocrImage(id, img.split(",")[1]); } catch (e) { delete ocrWait[id]; res(""); } setTimeout(() => { if (ocrWait[id]) { delete ocrWait[id]; res(""); } }, 20000); });
+    const r = C.parseDni(text, C.today());
+    if (!r.source) { toast("No se pudo leer el DNI. Tome otra foto, de cerca, con buena luz y sin reflejos (mejor el reverso)."); return; }
+    const nombre = titleCase([r.nombres, r.apP, r.apM].filter(Boolean).join(" "));
+    const mom = kind === "dniMadre";
+    const rows = mom ? [["Nombre", p.madreNombre, nombre], ["DNI", p.madreDni, r.dni]]
+      : [["Nombre", p.name, nombre], ["DNI", p.dni, r.dni], ["Fecha de nacimiento", p.dob ? fmtDate(p.dob) : "", r.dob ? fmtDate(r.dob) : ""], ["Sexo", p.sex === "M" ? "Masculino" : p.sex === "F" ? "Femenino" : "", r.sex === "M" ? "Masculino" : r.sex === "F" ? "Femenino" : ""]];
+    $("modal-body").innerHTML = `<h2>Datos leídos del ${mom ? "DNI de la madre" : "DNI del paciente"}</h2>
+      <p class="muted">Revise que coincidan con el documento antes de usarlos.</p>
+      <div class="tablewrap"><table><thead><tr><th></th><th>En la ficha</th><th>Leído</th></tr></thead><tbody>${rows.map(([k, a, b]) => `<tr><td>${k}</td><td>${esc(a || "—")}</td><td><b>${esc(b || "—")}</b></td></tr>`).join("")}</tbody></table></div>
+      <div class="actions"><button class="btn primary" id="m-yes">Usar datos leídos</button><button class="btn" id="m-no">Cancelar</button></div>`;
+    $("modal").hidden = false; $("m-no").onclick = closeModal;
+    $("m-yes").onclick = () => {
+      if (mom) { if (nombre) p.madreNombre = nombre; if (r.dni) p.madreDni = r.dni; }
+      else { if (nombre) p.name = nombre; if (r.dni) p.dni = r.dni; if (r.dob) p.dob = r.dob; if (r.sex) p.sex = r.sex; }
+      Store.save(p); closeModal(); render(false); toast("Ficha actualizada con los datos del DNI.");
+    };
+  }
+
+  /* ================= Historia del paciente para guardar o imprimir ================= */
+  async function printHistoria() {
+    const p = cur, D = derive(p), P = C.prof();
+    const face = p.photos && p.photos.rostro ? await Store.photoGet(p.id, "rostro") : null;
+    const e = esc, evs = p.events.slice().sort(C.byDate);
+    const row = (k, v) => (v ? `<tr><th>${k}</th><td>${e(v)}</td></tr>` : "");
+    const html = `<!DOCTYPE html><html lang="es-PE"><head><meta charset="utf-8"><title>Historia ${e(p.name || "")}</title><style>
+      @page { size: A4; margin: 14mm; } body { font: 11px/1.4 Arial, Helvetica, sans-serif; color: #111; }
+      h1 { font-size: 17px; margin: 0 0 2px; } h2 { font-size: 13px; margin: 16px 0 6px; padding-bottom: 3px; border-bottom: 1.5px solid #333; }
+      table { width: 100%; border-collapse: collapse; } th, td { text-align: left; vertical-align: top; padding: 3px 5px; border-bottom: 1px solid #ccc; } th { width: 30%; font-weight: 600; }
+      .hd { display: flex; gap: 14px; align-items: center; } .hd img { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid #999; }
+      .mut { color: #555; } .ev td, .ev th { font-size: 10.5px; } .ev th { width: auto; background: #eee; } tr { page-break-inside: avoid; }
+    </style></head><body>
+      <div class="hd">${face ? `<img src="${face}" alt="">` : ""}<div><h1>${e(p.name || "Sin nombre")}</h1><div>${p.dni ? "DNI " + e(p.dni) : "Sin DNI"}${p.hc ? " · HC " + e(p.hc) : ""}</div>
+        <div class="mut">${e(P.name)} · ${e(P.org || "")} · impreso el ${e(fmtDate(C.today()))}</div></div></div>
+      <h2>Ficha</h2><table>
+        ${row("Fecha de nacimiento", p.dob ? fmtDate(p.dob) + " (" + C.ageLabel(D.age) + ")" : "")}${row("Sexo", p.sex === "M" ? "Masculino" : p.sex === "F" ? "Femenino" : "")}
+        ${row("Madre o apoderado", [p.madreNombre, p.madreDni ? "DNI " + p.madreDni : ""].filter(Boolean).join(" · "))}${row("Dirección", p.address)}${row("Altitud", p.altitude ? p.altitude + " msnm" : "")}
+        ${row("Teléfonos", [p.phone1, p.phone2].filter(Boolean).join(" · "))}${row("Condición", [p.preg ? "Gestante" + (p.weeks ? " (" + p.weeks + " sem.)" : "") : "", p.puerp ? "Puérpera" : "", p.preterm ? "Prematuro o bajo peso al nacer" : "", p.altoRiesgo ? "Alto riesgo de anemia" : ""].filter(Boolean).join(" · "))}
+        ${row("Alergias", p.allergy === "si" ? p.allergyText || "Sí" : p.allergy === "no" ? "No" : "")}
+        ${row("Hb de diagnóstico", p.hb ? p.hb + " g/dL" + (p.hbDate ? " el " + fmtDate(p.hbDate) : "") + (D.hbAdj != null ? " · ajustada " + C.f1(D.hbAdj) + " g/dL" : "") : "")}
+        ${row("Modalidad", p.mode === "prevention" ? "Suplementación preventiva" : "Tratamiento")}${row("Inicio del esquema", p.start ? fmtDate(p.start) : "")}</table>
+      <h2>Evaluación</h2><table>${row("Clasificación", D.cls && D.cls.label)}${row("Esquema", D.pl && D.pl.title)}${row("Grupo", C.GROUPS[D.g] || "")}</table>
+      <h2>Atenciones (${evs.length})</h2>
+      ${evs.length ? `<table class="ev"><thead><tr><th>Fecha</th><th>Tipo</th><th>Hb / ajustada</th><th>Dx</th><th>Exámenes y resultados</th><th>Notas</th></tr></thead><tbody>${evs.map((x) => `<tr><td>${e(fmtDate(x.date))}</td><td>${e(x.type)}${x.lugar ? " (" + e(x.lugar) + ")" : ""}</td>
+        <td>${x.hb != null ? e(x.hb) + (x.hbAdj != null ? " / " + e(C.f1(x.hbAdj)) : "") : "—"}${x.clsLabel ? "<br>" + e(x.clsLabel) : ""}</td><td>${e(x.dx || "—")}</td>
+        <td>${e((x.orders || []).join(", "))}${x.labDx && x.labDx.length ? "<br>Sugerido: " + e(x.labDx.join("; ")) : ""}</td><td>${e([x.ref ? x.ref + (x.refDest ? " a " + x.refDest : "") : "", x.ram ? "RAM: " + (x.ramNote || "sí") : "", x.notes].filter(Boolean).join(" · "))}</td></tr>`).join("")}</tbody></table>` : `<p class="mut">Sin atenciones.</p>`}
+      <h2>HIS</h2>
+      ${evs.filter((x) => x.his).length ? `<table class="ev"><thead><tr><th>Fecha</th><th>Tipo</th><th>Códigos HIS (tipo · lab)</th></tr></thead><tbody>${evs.filter((x) => x.his).map((x) => `<tr><td>${e(fmtDate(x.date))}</td><td>${e(x.type)}</td><td>${(x.his.rows || []).map((r) => e(r.code + " · " + r.type + (r.lab ? " · " + r.lab : "") + " — " + r.text)).join("<br>") || "—"}</td></tr>`).join("")}</tbody></table>` : `<p class="mut">Sin HIS guardados.</p>`}
+      ${P.noFua ? "" : `<h2>FUA</h2>${evs.filter((x) => x.fua && x.fua.num).length ? `<table class="ev"><thead><tr><th>Fecha</th><th>N° de FUA</th><th>Diagnósticos</th><th>Prestaciones</th></tr></thead><tbody>${evs.filter((x) => x.fua && x.fua.num).map((x) => `<tr><td>${e(fmtDate(x.date))}</td><td>${e([x.fua.lote, x.fua.year, x.fua.num].join("-"))}</td><td>${e((x.fua.dxs || []).map((d) => d.code).filter(Boolean).join(", "))}</td><td>${e((x.fua.sub || []).concat(x.fua.procs || []).map((s) => s.code).filter(Boolean).join(", "))}</td></tr>`).join("")}</tbody></table>` : `<p class="mut">Sin FUA guardados.</p>`}`}
+      <p class="mut" style="margin-top:18px">Documento generado con ${e(P.name)}. Herramienta de apoyo al médico tratante.</p>
+    </body></html>`;
+    const B = window.AndroidBridge, name = "Historia_" + String(p.name || "paciente").replace(/[^A-Za-z0-9]+/g, "_");
+    if (B && B.printHtml) { try { B.printHtml(html, name); return; } catch (err) { /* sigue */ } }
+    try {
+      let fr = $("fua-print-frame"); if (fr) fr.remove();
+      fr = document.createElement("iframe"); fr.id = "fua-print-frame"; fr.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0"; document.body.appendChild(fr);
+      fr.contentDocument.open(); fr.contentDocument.write(html); fr.contentDocument.close();
+      setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (err) { download(name + ".html", html, "Historia del paciente"); } }, 300);
+    } catch (err) { download(name + ".html", html, "Historia del paciente"); }
+  }
+
   function viewPaciente() {
     const D = derive(cur);
     const body = ptab === "ficha" ? viewFicha(D) : ptab === "evaluacion" ? viewEvaluacion(D) : ptab === "atenciones" ? viewAtenciones(D) : ptab === "fua" && !C.prof().noFua ? viewFua(D) : viewHis(D);
     return `<div class="actions"><button class="btn" data-act="route" data-to="pacientes">← Pacientes</button><button class="btn" data-act="route" data-to="inicio">Buscar otro paciente</button></div>
       <section class="summary" id="summary" aria-label="Resumen del paciente" data-tone="${toneOf(D.cls)}">${summaryHtml(D)}</section>
+      ${idStrip(D)}
       <nav class="tabs sub" role="tablist" aria-label="Secciones del paciente">${[["ficha", "Ficha"], ["evaluacion", "Evaluación"], ["atenciones", "Atenciones"], ["his", "HIS"], ["fua", "FUA"]].filter(([k]) => k !== "fua" || !C.prof().noFua).map(([k, t]) => `<button role="tab" id="pt-${k}" data-act="ptab" data-to="${k}" aria-selected="${k === ptab}">${t}</button>`).join("")}</nav>
       ${body}`;
   }
@@ -2922,7 +3151,7 @@ const HBFua = (() => {
     ["inicio", "pacientes", "reporte", "ajustes"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === route || (t === "pacientes" && route === "paciente"))));
     $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : viewPaciente();
     if (route === "paciente" && ptab === "atenciones") updateLab();
-    renderStatus(); stale = false; hdrSoon();
+    renderStatus(); stale = false; hdrSoon(); if (route === "paciente") idPaint();
     if (act) { const el = $(act); if (el) el.focus({ preventScroll: true }); }
   }
   // Franja superior: día del periodo y avance de la actividad principal
@@ -3027,17 +3256,50 @@ const HBFua = (() => {
     const act = { "Telemonitoreo": "99499.10", "Teleorientación": "99499.08", "Visita domiciliaria": "C0011", "Atención en nutrición": "99209", "Consejería nutricional": "99403" }[d.type];
     p.his = Object.assign(blankHis(), { dx: dx || "", dxType: others.some((e) => e.dx === dx && e.date <= date) ? "R" : "D", dxLab: dx === "D649" ? "" : cls.his && (dx === "D509" || dx === "O990") ? cls.his : "auto",
       hbMethod: hb != null ? "85018.01" : "", labs: d.orders.filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab });
+    p.hisFor = ev.id; ev.his = hisSnapshot(p);
     draft = blankDraft(); dOpen = {}; Store.save(p); render(false);
     toast(p.example ? "Atención agregada al ejemplo (no se guarda)." : "Atención guardada.");
   }
-  function editEvent(i) {
-    const e = cur.events[i]; if (!e) return;
+  function draftFromEvent(i) {
+    const e = cur.events[i]; if (!e) return null;
     const s = (v) => (v == null ? "" : String(v));
-    draft = { i, date: e.date, type: e.type, hb: s(e.hb), weight: s(e.weight), height: s(e.height), adherence: s(e.adherence), dx: e.dx || "none", orders: (e.orders || []).slice(), res: Object.assign({}, e.res || {}),
+    return { i, date: e.date, type: e.type, hb: s(e.hb), weight: s(e.weight), height: s(e.height), adherence: s(e.adherence), dx: e.dx || "none", orders: (e.orders || []).slice(), res: Object.assign({}, e.res || {}),
       resEval: !!e.resEval, adverse: (e.adverse || []).slice(), ram: !!e.ram, ramNote: e.ramNote || "", ref: e.ref || "", refDest: e.refDest || "", refReason: e.refReason || "", notes: e.notes || "",
       comorb: (e.comorb || []).slice(), comorbTx: e.comorbTx || "", tol: (e.adverse || []).length ? "efectos" : e.tol || "", medidas: (e.medidas || []).slice(), medidasTxt: e.medidasTxt || "",
       coord: (e.coord || []).slice(), consej: !!e.consej, regHC: !!e.regHC, regHIS: !!e.regHIS, nutri: e.nutri || "", lugar: e.lugar || "", visitWhy: e.visitWhy || "", hemDias: e.hemDias == null ? "" : e.hemDias, consejHem: !!e.consejHem };
-    render(false); window.scrollTo(0, $("summary").offsetTop);
+  }
+  function editEvent(i) { const d = draftFromEvent(i); if (!d) return; draft = d; render(false); window.scrollTo(0, $("summary").offsetTop); }
+
+  /* ===== HIS guardado en cada atención ===== */
+  function hisSnapshot(p) {
+    let rows = []; try { rows = C.hisRows(hisResolved(derive(p))); } catch (e) { rows = []; }
+    return Object.assign(clone(p.his), { rows, saved: C.today() });
+  }
+  function hisLoad(i) {
+    const p = cur, ev = p.events[i]; if (!ev) return;
+    if (ev.his) { const h = clone(ev.his); delete h.rows; delete h.saved; p.his = Object.assign(blankHis(), h); }
+    else {
+      const act = { "Telemonitoreo": "99499.10", "Teleorientación": "99499.08", "Visita domiciliaria": "C0011", "Atención en nutrición": "99209", "Consejería nutricional": "99403" }[ev.type];
+      p.his = Object.assign(blankHis(), { dx: ev.dx || "", dxType: p.events.some((e) => e !== ev && e.dx && e.dx === ev.dx && e.date < ev.date) ? "R" : "D", dxLab: "auto",
+        hbMethod: ev.hb != null ? "85018.01" : "", labs: (ev.orders || []).filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab });
+    }
+    p.hisFor = ev.id; Store.save(p);
+  }
+
+  /* ===== Hb de la ficha → atención del mismo día (aparece en Evaluación, Atenciones e HIS) ===== */
+  function syncFichaHb() {
+    const p = cur; if (!p || p.example) return;
+    const hb = C.num(p.hb), date = p.hbDate;
+    if (hb == null || !C.parseDate(date) || !C.parseDate(p.dob)) return;
+    const i = p.events.findIndex((e) => e.date === date);
+    if (i >= 0 && C.num(p.events[i].hb) === hb) return;
+    const keep = draft, keepTab = ptab;
+    const d = i >= 0 ? draftFromEvent(i) : Object.assign(blankDraft(), { date, dx: "auto" });
+    d.hb = String(hb); draft = d;
+    saveEvent();
+    if (keep && keep.i == null && keep.date !== date) draft = keep;
+    ptab = keepTab; render(false);
+    toast("Hb del " + fmtDate(date) + " registrada también en Atenciones, Evaluación e HIS.");
   }
 
   /* ================= Diálogos y archivos ================= */
@@ -3269,10 +3531,13 @@ const HBFua = (() => {
   view.addEventListener("change", (e) => {
     const el = e.target, ds = el.dataset, choice = el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio";
     if (ds.fuaEv) { fuaI = +el.value; fuaD = null; render(true); return; }
+    if (ds.hisEv) { if (+el.value >= 0) hisLoad(+el.value); render(true); return; }
+    if (ds.cap && el.files && el.files[0]) { takePhoto(ds.cap, el.files[0]); el.value = ""; return; }
     if (ds.fuMed != null && fuaD) { const M = HBFua.MEDS.find((x) => x.code === el.value), m = fuaD.meds[+ds.fuMed]; if (M) { m.code = M.code; m.name = M.name; } else { m.code = ""; m.name = ""; } render(true); return; }
     if (ds.fu && fuaD && choice) { fuaSet(ds.fu, el.type === "checkbox" ? el.checked : el.value); if (ds.fu === "destino" || ds.fu === "prest") render(true); else updateFuaCheck(); return; }
     if (ds.fc && choice) { const c = Object.assign({}, Store.meta().fuaCfg || {}); c[ds.fc] = el.value; Store.setMeta("fuaCfg", c); return; }
     if (ds.k && cur) {
+      if (ds.k === "hb" || ds.k === "hbDate") { setP(ds.k, el.value); setTimeout(syncFichaHb, 0); }
       if (choice) { setP(ds.k, el.type === "checkbox" ? el.checked : el.value); render(true); }
       else if (ds.k === "dob" || ds.k === "weeks") render(true);
     } else if (ds.e) {
@@ -3363,6 +3628,15 @@ const HBFua = (() => {
     else if (a === "backup") { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(Store.exportAll(), null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }
     else if (a === "restore") $("imp").click();
     else if (a === "retry") Store.retry();
+    else if (a === "his-save") {
+      const ev = cur.events.find((e) => e.id === cur.hisFor); if (!ev) return;
+      ev.his = hisSnapshot(cur); Store.save(cur); render(true); toast("HIS del " + fmtDate(ev.date) + " guardado en la ficha del paciente.");
+    }
+    else if (a === "his-pick") { hisLoad(+b.dataset.i); render(false); window.scrollTo(0, 0); }
+    else if (a === "id-open") idModal();
+    else if (a === "id-del") { const k = b.dataset.kind; confirmBox("¿Quitar esta foto?", "Quitar foto", async () => { await Store.photoDel(cur.id, k); if (cur.photos) delete cur.photos[k]; Store.save(cur); render(true); idRefreshModal(); }); }
+    else if (a === "id-read") ocrPhoto(b.dataset.kind);
+    else if (a === "historia") printHistoria();
     else if (a === "dm-save") {
       const to = $("dm-to").value.trim(), on = $("dm-on").checked, tm = /^(\d{2}):(\d{2})$/.exec($("dm-time").value || "20:00");
       if (on && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { toast("Escriba un correo válido."); return; }

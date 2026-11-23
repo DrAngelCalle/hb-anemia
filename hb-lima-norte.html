@@ -520,23 +520,16 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 .seg label { white-space: normal; overflow-wrap: anywhere; padding: 10px 8px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .seg label { position: relative; } .seg input { left: 0; top: 0; width: 1px; height: 1px; margin: 0; }
 
-/* Identificación: fotos del paciente y del DNI */
+/* Identificación: franja con nombre, DNI y madre */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.idgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-.idslot { margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.idslot figcaption small { display: block; color: var(--muted); }
-.idimg { aspect-ratio: 1.58; border-radius: 10px; background: var(--accent-soft); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-size: 13px; border: 1px solid var(--line); }
-.idimg.face { aspect-ratio: 1; max-width: 180px; }
-.idimg img { width: 100%; height: 100%; object-fit: cover; }
-.idslot label.btn { cursor: pointer; }
-.idslot label.btn:has(+ input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
-.idstrip { display: grid; grid-template-columns: 56px 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; margin: 10px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
-.idstrip .idimg.sm { width: 56px; height: 56px; aspect-ratio: 1; border-radius: 50%; font-size: 22px; font-weight: 700; color: var(--accent); }
+#idcard label.btn { cursor: pointer; }
+#idcard label.btn:has(+ input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.idstrip { display: grid; grid-template-columns: 1fr; gap: 8px 12px; align-items: center; padding: 10px 14px; margin: 10px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .idtxt { min-width: 0; display: flex; flex-direction: column; }
 .idtxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .idtxt span { color: var(--muted); font-size: 13px; }
-.idacts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
-@media (min-width: 560px) { .idstrip { grid-template-columns: 56px 1fr auto; } .idacts { grid-column: auto; } }
+.idacts { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (min-width: 480px) { .idstrip { grid-template-columns: 1fr auto; } }
 
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
@@ -1760,7 +1753,7 @@ const HBFua = (() => {
   const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1" });
   const blankPatient = () => ({ id: "", ym: "", createdDate: C.today(), updated: 0, name: "", hc: "", dob: "", dni: "", address: "", altitude: "", email: "", phone1: "", phone2: "",
     refName: "", refPhone: "", sex: "F", weight: "", height: "", allergy: "no", allergyText: "", preg: false, puerp: false, fertile: false, preterm: false,
-    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", photos: {}, hisFor: "", events: [], his: blankHis() });
+    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", hisFor: "", events: [], his: blankHis() });
   const blankDraft = () => ({ i: null, date: C.today(), type: C.mainType(), hemDias: "", consejHem: false, hb: "", weight: "", height: "", adherence: "", dx: "auto", orders: [], res: {}, resEval: false,
     adverse: [], ram: false, ramNote: "", ref: "", refDest: "", refReason: "", notes: "",
     comorb: [], comorbTx: "", tol: "", medidas: [], medidasTxt: "", coord: [], consej: false, regHC: false, regHIS: false, nutri: "" });
@@ -2390,9 +2383,15 @@ const HBFua = (() => {
         ${inp("weight", "Peso (kg)", 'type="number" inputmode="decimal" min="0" step="0.1"')}
         ${inp("height", "Talla (cm)", 'type="number" inputmode="decimal" min="0" step="0.1"')}
         <div class="field"><span>IMC</span><output id="o-bmi">${D.bmi ? C.f1(D.bmi) : "—"}</output></div>
+        ${D.age && D.age.years < 18 ? `
+        ${inp("acompNombre", "Familiar que acude a la consulta", 'autocomplete="off"' + (p.madreNombre ? ` placeholder="${esc(p.madreNombre)}"` : ""), "Menor de 18 años: los teléfonos y el correo son de este familiar.")}
+        <label class="field" for="f-acompParentesco"><span>Parentesco</span>${sel("f-acompParentesco", 'data-k="acompParentesco"', p.acompParentesco || "Madre", [["Madre", "Madre"], ["Padre", "Padre"], ["Abuela", "Abuela"], ["Abuelo", "Abuelo"], ["Tía", "Tía"], ["Tío", "Tío"], ["Hermana", "Hermana"], ["Hermano", "Hermano"], ["Apoderado", "Apoderado/a"], ["Otro", "Otro familiar"]])}</label>
+        ${inp("phone1", "Teléfono 1 del familiar", 'type="tel" autocomplete="off"')}
+        ${inp("phone2", "Teléfono 2 del familiar", 'type="tel" autocomplete="off"')}
+        ${inp("email", "Correo del familiar", 'type="email" autocomplete="off"')}` : `
         ${inp("phone1", "Teléfono 1", 'type="tel" autocomplete="off"')}
         ${inp("phone2", "Teléfono 2", 'type="tel" autocomplete="off"')}
-        ${inp("email", "Correo", 'type="email" autocomplete="off"')}
+        ${inp("email", "Correo", 'type="email" autocomplete="off"')}`}
         ${inp("refName", "Contacto de referencia", 'autocomplete="off"')}
         ${inp("refPhone", "Teléfono del contacto", 'type="tel" autocomplete="off"')}
       </div>
@@ -2865,58 +2864,31 @@ const HBFua = (() => {
     </section>`;
   }
 
-  /* ================= Identificación: fotos del paciente y del DNI ================= */
-  const KINDS = { rostro: "Foto del paciente", dni: "DNI del paciente", dniMadre: "DNI de la madre o apoderado" };
+  /* ================= Identificación: lectura del DNI (la foto no se guarda) ================= */
+  const KINDS = { dni: "DNI del paciente", dniMadre: "DNI de la madre o apoderado" };
   const isMinor = (D) => !D.age || D.age.years < 18;
   const titleCase = (s) => String(s || "").toLowerCase().replace(/(^|\s)\S/g, (m) => m.toUpperCase());
   const ocrOk = () => !!(window.AndroidBridge && window.AndroidBridge.ocrImage && !window.AndroidBridge.isWeb);
-  function photoSlot(p, kind) {
-    const has = p.photos && p.photos[kind], dniK = kind !== "rostro";
-    return `<figure class="idslot">
-      <div class="idimg ${kind === "rostro" ? "face" : ""}">${has ? `<img data-photo="${kind}" alt="${esc(KINDS[kind])}">` : `<span>Sin foto</span>`}</div>
-      <figcaption><b>${esc(KINDS[kind])}</b>${has ? `<small>Tomada el ${esc(fmtShort(has))}</small>` : ""}</figcaption>
-      <div class="actions">
-        <label class="btn small" for="cap-${kind}">${has ? "Cambiar" : "Tomar foto"}</label>
-        <input type="file" id="cap-${kind}" accept="image/*" capture="${kind === "rostro" ? "user" : "environment"}" data-cap="${kind}" class="vh">
-        ${has && dniK && ocrOk() ? `<button class="btn small" data-act="id-read" data-kind="${kind}">Leer datos</button>` : ""}
-        ${has ? `<button class="btn small" data-act="id-del" data-kind="${kind}">Quitar</button>` : ""}
-      </div></figure>`;
-  }
+  const scanBtn = (kind, label) => `<label class="btn" for="scan-${kind}">${label}</label><input type="file" id="scan-${kind}" accept="image/*" capture="environment" data-scan="${kind}" class="vh">`;
   function idCard(D) {
     const p = D.p; if (p.example) return "";
+    const minor = isMinor(D);
+    if (!ocrOk() && !minor) return "";
     return `<section class="card" id="idcard"><h2>Identificación</h2>
-      <p class="muted">${ocrOk() ? "Al fotografiar un DNI, la app lee el número, los apellidos, los nombres, la fecha de nacimiento y el sexo para llenar la ficha. Funciona mejor con el reverso (las líneas con «<»)." : "Las fotos sirven para identificar al paciente en cada atención. La lectura automática del DNI está en el APK."}</p>
-      <div class="idgrid">${photoSlot(p, "rostro")}${photoSlot(p, "dni")}${isMinor(D) ? photoSlot(p, "dniMadre") : ""}</div>
-      ${isMinor(D) ? `<div class="grid">${inp("madreNombre", "Nombre de la madre o apoderado", 'autocomplete="off"')}${inp("madreDni", "DNI de la madre o apoderado", 'inputmode="numeric" maxlength="8" autocomplete="off"')}</div>` : ""}
-      <p class="muted">Las fotos se guardan solo en este equipo, aparte del respaldo, y no se envían por correo.</p>
+      ${ocrOk() ? `<p class="muted">Fotografíe el DNI y la app registra el número, los apellidos, los nombres${minor ? "" : ", la fecha de nacimiento y el sexo"}. La foto solo se usa para leer los datos: no se guarda. Lee mejor el reverso (las líneas con «<»).</p>
+      <div class="actions">${scanBtn("dni", "Leer DNI del paciente")}${minor ? scanBtn("dniMadre", "Leer DNI de la madre o apoderado") : ""}</div>` : ""}
+      ${minor ? `<div class="grid">${inp("madreNombre", "Nombre de la madre o apoderado", 'autocomplete="off"')}${inp("madreDni", "DNI de la madre o apoderado", 'inputmode="numeric" maxlength="8" autocomplete="off"')}</div>` : ""}
     </section>`;
   }
   function idStrip(D) {
     const p = D.p; if (p.example) return "";
     const m = isMinor(D) && (p.madreNombre || p.madreDni);
     return `<section class="idstrip" aria-label="Identificación del paciente">
-      <div class="idimg face sm">${p.photos && p.photos.rostro ? `<img data-photo="rostro" alt="Foto de ${esc(p.name || "el paciente")}">` : `<span aria-hidden="true">${esc((p.name || "?").trim().charAt(0).toUpperCase())}</span>`}</div>
       <div class="idtxt"><b>${esc(p.name || "Sin nombre")}</b><span>${p.dni ? "DNI " + esc(p.dni) : "Sin DNI"}${p.hc ? " · HC " + esc(p.hc) : ""}</span>${m ? `<span>Madre: ${esc(p.madreNombre || "—")}${p.madreDni ? " · DNI " + esc(p.madreDni) : ""}</span>` : ""}</div>
-      <div class="idacts"><button class="btn small" data-act="id-open">Fotos y DNI</button><button class="btn small" data-act="historia">Historia (PDF)</button></div>
+      <div class="idacts"><button class="btn small" data-act="historia">Historia (PDF)</button></div>
     </section>`;
   }
-  // Carga las fotos en las imágenes visibles (se leen del almacenamiento cuando hacen falta)
-  async function idPaint(root) {
-    if (!cur) return; const pid = cur.id;
-    for (const img of (root || document).querySelectorAll("img[data-photo]")) {
-      if (img.src) continue;
-      const d = await Store.photoGet(pid, img.dataset.photo);
-      if (d && cur && cur.id === pid) img.src = d; else if (!d) img.replaceWith(Object.assign(document.createElement("span"), { textContent: "Sin foto" }));
-    }
-  }
-  function idModal() {
-    const D = derive(cur);
-    $("modal-body").innerHTML = `<div class="idgrid">${photoSlot(cur, "rostro")}${photoSlot(cur, "dni")}${isMinor(D) ? photoSlot(cur, "dniMadre") : ""}</div>
-      <div class="actions"><button class="btn" id="m-no">Cerrar</button></div>`;
-    $("modal").hidden = false; $("m-no").onclick = closeModal; idPaint($("modal-body"));
-  }
-  function idRefreshModal() { if (!$("modal").hidden && $("modal-body").querySelector(".idgrid")) idModal(); }
-  // Reduce la foto: rostro 640 px, DNI 1400 px (legible) en JPEG
+  // Prepara la foto del DNI para la lectura (1600 px, sin guardarla)
   function shrink(file, max, q) {
     return new Promise((res, rej) => {
       const url = URL.createObjectURL(file), im = new Image();
@@ -2926,22 +2898,23 @@ const HBFua = (() => {
       im.src = url;
     });
   }
-  async function takePhoto(kind, file) {
-    const p = cur; if (!p) return;
-    try {
-      const data = await shrink(file, kind === "rostro" ? 640 : 1400, kind === "rostro" ? 0.78 : 0.72);
-      await Store.photoPut(p.id, kind, data);
-      p.photos = Object.assign({}, p.photos || {}, { [kind]: C.today() }); Store.save(p);
-      render(true); idRefreshModal(); toast(KINDS[kind] + " guardada.");
-      if (kind !== "rostro" && ocrOk()) ocrPhoto(kind, data);
-    } catch (e) { toast("No se pudo guardar la foto: " + (e && e.message ? e.message : "intente de nuevo") + "."); }
+  async function scanDni(kind, file) {
+    try { ocrPhoto(kind, await shrink(file, 1600, 0.85)); } catch (e) { toast("No se pudo abrir la foto del DNI. Intente de nuevo."); }
+  }
+  // Borra las fotos que guardaron versiones anteriores (rostro y DNI): ya no se conservan
+  async function purgePhotos() {
+    for (const p of Store.list()) {
+      if (p.example || !p.photos || !Object.keys(p.photos).length) continue;
+      for (const k of Object.keys(p.photos)) await Store.photoDel(p.id, k);
+      delete p.photos; Store.save(p);
+    }
   }
   // Lectura del DNI con el reconocimiento de texto del teléfono (APK)
   const ocrWait = {};
   window.HBOcrDone = (id, text) => { const f = ocrWait[id]; delete ocrWait[id]; if (f) f(text || ""); };
   async function ocrPhoto(kind, data) {
     const p = cur; if (!p || !ocrOk()) return;
-    const img = data || (await Store.photoGet(p.id, kind)); if (!img) return;
+    const img = data; if (!img) return;
     toast("Leyendo el DNI…");
     const id = "o" + Date.now();
     const text = await new Promise((res) => { ocrWait[id] = res; try { window.AndroidBridge.ocrImage(id, img.split(",")[1]); } catch (e) { delete ocrWait[id]; res(""); } setTimeout(() => { if (ocrWait[id]) { delete ocrWait[id]; res(""); } }, 20000); });
@@ -2966,7 +2939,6 @@ const HBFua = (() => {
   /* ================= Historia del paciente para guardar o imprimir ================= */
   async function printHistoria() {
     const p = cur, D = derive(p), P = C.prof();
-    const face = p.photos && p.photos.rostro ? await Store.photoGet(p.id, "rostro") : null;
     const e = esc, evs = p.events.slice().sort(C.byDate);
     const row = (k, v) => (v ? `<tr><th>${k}</th><td>${e(v)}</td></tr>` : "");
     const html = `<!DOCTYPE html><html lang="es-PE"><head><meta charset="utf-8"><title>Historia ${e(p.name || "")}</title><style>
@@ -2976,12 +2948,13 @@ const HBFua = (() => {
       .hd { display: flex; gap: 14px; align-items: center; } .hd img { width: 84px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid #999; }
       .mut { color: #555; } .ev td, .ev th { font-size: 10.5px; } .ev th { width: auto; background: #eee; } tr { page-break-inside: avoid; }
     </style></head><body>
-      <div class="hd">${face ? `<img src="${face}" alt="">` : ""}<div><h1>${e(p.name || "Sin nombre")}</h1><div>${p.dni ? "DNI " + e(p.dni) : "Sin DNI"}${p.hc ? " · HC " + e(p.hc) : ""}</div>
+      <div class="hd"><div><h1>${e(p.name || "Sin nombre")}</h1><div>${p.dni ? "DNI " + e(p.dni) : "Sin DNI"}${p.hc ? " · HC " + e(p.hc) : ""}</div>
         <div class="mut">${e(P.name)} · ${e(P.org || "")} · impreso el ${e(fmtDate(C.today()))}</div></div></div>
       <h2>Ficha</h2><table>
         ${row("Fecha de nacimiento", p.dob ? fmtDate(p.dob) + " (" + C.ageLabel(D.age) + ")" : "")}${row("Sexo", p.sex === "M" ? "Masculino" : p.sex === "F" ? "Femenino" : "")}
         ${row("Madre o apoderado", [p.madreNombre, p.madreDni ? "DNI " + p.madreDni : ""].filter(Boolean).join(" · "))}${row("Dirección", p.address)}${row("Altitud", p.altitude ? p.altitude + " msnm" : "")}
-        ${row("Teléfonos", [p.phone1, p.phone2].filter(Boolean).join(" · "))}${row("Condición", [p.preg ? "Gestante" + (p.weeks ? " (" + p.weeks + " sem.)" : "") : "", p.puerp ? "Puérpera" : "", p.preterm ? "Prematuro o bajo peso al nacer" : "", p.altoRiesgo ? "Alto riesgo de anemia" : ""].filter(Boolean).join(" · "))}
+        ${D.age && D.age.years < 18 ? row("Familiar que acude", [p.acompNombre || (p.acompParentesco === "Madre" ? p.madreNombre : ""), p.acompParentesco].filter(Boolean).join(" · ")) + row("Teléfonos del familiar", [p.phone1, p.phone2].filter(Boolean).join(" · ")) + row("Correo del familiar", p.email)
+          : row("Teléfonos", [p.phone1, p.phone2].filter(Boolean).join(" · ")) + row("Correo", p.email)}${row("Condición", [p.preg ? "Gestante" + (p.weeks ? " (" + p.weeks + " sem.)" : "") : "", p.puerp ? "Puérpera" : "", p.preterm ? "Prematuro o bajo peso al nacer" : "", p.altoRiesgo ? "Alto riesgo de anemia" : ""].filter(Boolean).join(" · "))}
         ${row("Alergias", p.allergy === "si" ? p.allergyText || "Sí" : p.allergy === "no" ? "No" : "")}
         ${row("Hb de diagnóstico", p.hb ? p.hb + " g/dL" + (p.hbDate ? " el " + fmtDate(p.hbDate) : "") + (D.hbAdj != null ? " · ajustada " + C.f1(D.hbAdj) + " g/dL" : "") : "")}
         ${row("Modalidad", p.mode === "prevention" ? "Suplementación preventiva" : "Tratamiento")}${row("Inicio del esquema", p.start ? fmtDate(p.start) : "")}</table>
@@ -3151,7 +3124,8 @@ const HBFua = (() => {
     ["inicio", "pacientes", "reporte", "ajustes"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === route || (t === "pacientes" && route === "paciente"))));
     $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : viewPaciente();
     if (route === "paciente" && ptab === "atenciones") updateLab();
-    renderStatus(); stale = false; hdrSoon(); if (route === "paciente") idPaint();
+    renderStatus(); stale = false; hdrSoon();
+    if (!purgePhotos.done && Store.status().tone !== "busy") { purgePhotos.done = true; purgePhotos().catch(() => {}); }
     if (act) { const el = $(act); if (el) el.focus({ preventScroll: true }); }
   }
   // Franja superior: día del periodo y avance de la actividad principal
@@ -3532,7 +3506,7 @@ const HBFua = (() => {
     const el = e.target, ds = el.dataset, choice = el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio";
     if (ds.fuaEv) { fuaI = +el.value; fuaD = null; render(true); return; }
     if (ds.hisEv) { if (+el.value >= 0) hisLoad(+el.value); render(true); return; }
-    if (ds.cap && el.files && el.files[0]) { takePhoto(ds.cap, el.files[0]); el.value = ""; return; }
+    if (ds.scan && el.files && el.files[0]) { scanDni(ds.scan, el.files[0]); el.value = ""; return; }
     if (ds.fuMed != null && fuaD) { const M = HBFua.MEDS.find((x) => x.code === el.value), m = fuaD.meds[+ds.fuMed]; if (M) { m.code = M.code; m.name = M.name; } else { m.code = ""; m.name = ""; } render(true); return; }
     if (ds.fu && fuaD && choice) { fuaSet(ds.fu, el.type === "checkbox" ? el.checked : el.value); if (ds.fu === "destino" || ds.fu === "prest") render(true); else updateFuaCheck(); return; }
     if (ds.fc && choice) { const c = Object.assign({}, Store.meta().fuaCfg || {}); c[ds.fc] = el.value; Store.setMeta("fuaCfg", c); return; }
@@ -3633,9 +3607,6 @@ const HBFua = (() => {
       ev.his = hisSnapshot(cur); Store.save(cur); render(true); toast("HIS del " + fmtDate(ev.date) + " guardado en la ficha del paciente.");
     }
     else if (a === "his-pick") { hisLoad(+b.dataset.i); render(false); window.scrollTo(0, 0); }
-    else if (a === "id-open") idModal();
-    else if (a === "id-del") { const k = b.dataset.kind; confirmBox("¿Quitar esta foto?", "Quitar foto", async () => { await Store.photoDel(cur.id, k); if (cur.photos) delete cur.photos[k]; Store.save(cur); render(true); idRefreshModal(); }); }
-    else if (a === "id-read") ocrPhoto(b.dataset.kind);
     else if (a === "historia") printHistoria();
     else if (a === "dm-save") {
       const to = $("dm-to").value.trim(), on = $("dm-on").checked, tm = /^(\d{2}):(\d{2})$/.exec($("dm-time").value || "20:00");

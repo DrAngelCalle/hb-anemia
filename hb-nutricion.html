@@ -423,6 +423,103 @@ button:disabled { opacity: .55; cursor: default; }
 .fuarow input, .fuarow select { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; color: inherit; }
 .fuarow .btn { align-self: end; }
 
+/* ---------- Diseño 2.7: identidad por app, franja de avance y navegación inferior ---------- */
+/* Color de cada app: Lima Norte verde azulado, Lima Centro vino, Nutrición verde.
+   --band es el fondo de la franja superior (oscuro en ambos modos, texto blanco). */
+:root, :root[data-app="limanorte"] { --accent: #0d6871; --accent-soft: #dff0f1; --series: #0b7fa3; --band: #0d6871; --band-2: #0a545b; }
+:root[data-app="limacentro"] { --accent: #7a2e4f; --accent-ink: #ffffff; --accent-soft: #f5e3eb; --series: #a23e6b; --band: #7a2e4f; --band-2: #5e2340; }
+:root[data-app="nutricion"] { --accent: #2a7349; --accent-ink: #ffffff; --accent-soft: #e0f1e6; --series: #3a925f; --band: #2a7349; --band-2: #1f5937; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-app="limanorte"] { --accent: #56c3cb; --accent-soft: #143a40; --series: #1aa3c4; --band: #0b4f56; --band-2: #083c42; }
+  :root:not([data-theme="light"])[data-app="limacentro"] { --accent: #e893b8; --accent-ink: #2a0c19; --accent-soft: #3d1a2a; --series: #d0709a; --band: #4e1d33; --band-2: #3b1626; }
+  :root:not([data-theme="light"])[data-app="nutricion"] { --accent: #7fd3a2; --accent-ink: #0c2a18; --accent-soft: #143322; --series: #55b77f; --band: #1d4d31; --band-2: #163b25; }
+}
+
+/* Franja superior */
+header.top { margin: -16px -16px 0; padding: 14px 16px 12px; background: var(--band); color: #fff; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; }
+header.top .brand { min-width: 0; gap: 0; }
+header.top h1 { font-size: 21px; line-height: 1.15; font-weight: 700; letter-spacing: 0; }
+header.top #app-sub { color: rgba(255, 255, 255, .78); font-size: 13px; }
+header.top .status { border: 0; background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px; padding: 4px 10px; max-width: 46vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header.top .status button { color: #fff; }
+.hdrprog { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font-size: 14px; }
+.hdrprog b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hdrprog .hbar { order: 2; height: 6px; border-radius: 3px; background: var(--band-2); overflow: hidden; }
+.hdrprog .hbar i { display: block; height: 100%; background: #fff; border-radius: 3px; transform: scaleX(0); transform-origin: left center; transition: transform 500ms var(--ease-out); }
+.hdrprog .pace { order: 3; color: rgba(255, 255, 255, .8); font-size: 13px; }
+@media (min-width: 761px) { header.top { margin: 0; border-radius: 14px; } }
+
+/* Títulos de sección en minúscula normal */
+h3 { font-size: 15px; text-transform: none; letter-spacing: 0; color: var(--ink); font-weight: 600; }
+
+/* Tarjetas y controles más cómodos al tacto */
+.card { border-radius: 14px; padding: 18px 16px; }
+.btn { min-height: 44px; border-radius: 10px; }
+.btn.small { min-height: 36px; padding: 7px 12px; font-size: 13.5px; }
+.field input, .field select, .field textarea { min-height: 46px; border-radius: 10px; }
+.tabs.sub button { border-radius: 10px; }
+
+/* Metas: filas comparables en lugar de tarjetas sueltas */
+.tiles { grid-template-columns: 1fr !important; gap: 0; }
+.tile { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 5px; align-items: baseline; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 13px 0; }
+.tile:last-child { border-bottom: 0; }
+.tile .lab { grid-column: 1; font-size: 14.5px; color: var(--ink); font-weight: 600; }
+.tile .val { grid-column: 2; grid-row: 1; text-align: right; font-size: 24px !important; font-weight: 700; }
+.tile > .meter, .tile > small, .tile > span:not(.lab):not(.val) { grid-column: 1 / -1; }
+.meter { height: 10px; border-radius: 5px; border: 0; background: var(--accent-soft); }
+.meter i { border-radius: 5px; }
+
+/* Lista de pacientes: el estado va debajo del nombre en el teléfono */
+@media (max-width: 560px) {
+  .prow { grid-template-columns: 1fr; gap: 6px; padding: 12px 2px; }
+  .prow .pill { justify-self: start; }
+}
+
+/* Navegación inferior en el teléfono */
+@media (max-width: 760px) {
+  nav.tabs.main { position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 20; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    background: var(--surface); border-top: 1px solid var(--line); padding: 6px 8px calc(8px + env(safe-area-inset-bottom)); }
+  nav.tabs.main button { border: 0; background: none; color: var(--muted); padding: 12px 4px; border-radius: 10px; font-size: 14px; }
+  nav.tabs.main button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+  main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
+
+/* Movimiento: solo transform y opacidad; respuesta al toque; salidas rápidas */
+:root { --ease-out: cubic-bezier(.22, 1, .36, 1); }
+.btn, nav.tabs button, .tabs.sub button, .prow, .check, .seg label { transition: transform 140ms var(--ease-out), background-color 140ms ease, color 140ms ease; }
+.btn:active, nav.tabs button:active, .tabs.sub button:active, .check:active, .seg label:active { transform: scale(.97); }
+.prow:active { transform: scale(.99); }
+/* El fondo al pasar el puntero solo en equipos con mouse (en el teléfono un toque lo dejaría pegado) */
+.prow:hover { background: none; }
+@media (hover: hover) and (pointer: fine) { .prow:hover { background: var(--accent-soft); } }
+.toast { animation: hb-rise 220ms var(--ease-out); }
+.modal:not([hidden]) { animation: hb-fade 180ms ease-out; }
+.modal:not([hidden]) > div { animation: hb-pop 220ms var(--ease-out); }
+@keyframes hb-rise { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes hb-fade { from { opacity: 0; } }
+@keyframes hb-pop { from { opacity: 0; transform: scale(.97); } }
+/* Movimiento reducido: sin desplazamientos, solo fundidos breves */
+@media (prefers-reduced-motion: reduce) {
+  .toast, .modal:not([hidden]), .modal:not([hidden]) > div { animation: hb-fade 160ms ease-out !important; }
+  .btn:active, nav.tabs button:active, .tabs.sub button:active, .check:active, .seg label:active, .prow:active { transform: none; }
+}
+/* Capas: la navegación inferior queda bajo los diálogos y la pantalla de bloqueo */
+nav.tabs.main { z-index: 15; }
+.modal { z-index: 40; border-radius: 0; }
+.modal > div { border-radius: 16px; }
+/* Zonas táctiles de 44 px como mínimo y selectores que se ajustan al ancho */
+nav.tabs.main button { min-height: 48px; }
+.tabs.sub button { min-height: 44px; }
+.btn.small { min-height: 44px; padding: 8px 12px; }
+header.top .status { padding: 0 12px; min-height: 32px; }
+header.top .status button { min-height: 44px; padding: 0 2px; }
+details > summary { min-height: 44px; display: flex; align-items: center; }
+.reftable input, .fuarow input, .fuarow select, .searchrow input { min-height: 44px; }
+.seg { display: grid; width: 100%; max-width: 100%; grid-auto-columns: minmax(0, 1fr); }
+.seg label { white-space: normal; overflow-wrap: anywhere; padding: 10px 8px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.seg label { position: relative; } .seg input { left: 0; top: 0; width: 1px; height: 1px; margin: 0; }
+
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
@@ -432,6 +529,7 @@ button:disabled { opacity: .55; cursor: default; }
     <div class="brand"><h1 id="app-name">HB Lima Norte</h1>
       <p id="app-sub">Anemia en niñas, niños y gestantes · NTS N.° 213-MINSA/DGIESP-2024 (RM 251-2024 y RM 429-2024) · Manual HIS de anemia 2024</p></div>
     <div class="status" id="status" role="status" data-tone="busy">Conectando con el almacenamiento…</div>
+    <div class="hdrprog" id="hdr-prog" hidden><span id="hdr-txt"></span><span class="pace" id="hdr-pace"></span><div class="hbar" aria-hidden="true"><i id="hdr-bar"></i></div></div>
   </header>
 
   <nav class="tabs main" role="tablist" aria-label="Secciones" id="tabs">
@@ -1872,7 +1970,7 @@ const HBFua = (() => {
       if (st.saveErr) return { tone: "err", text: st.saveErr, retry: true };
       if (st.loading) return { tone: "busy", text: st.slow ? "Los registros tardan en cargar; siga esperando…" : "Cargando registros…" };
       if (timers.size || queued.size || st.saving) return { tone: "busy", text: "Guardando…" };
-      return st.mode === "cloud" ? { tone: "ok", text: "Guardado en su cuenta" } : STANDALONE ? { tone: "ok", text: "Guardado en este dispositivo" } : { tone: "warn", text: "Guardado solo en este navegador" };
+      return st.mode === "cloud" ? { tone: "ok", text: "Guardado en su cuenta" } : STANDALONE ? { tone: "ok", text: "Guardado en el equipo" } : { tone: "warn", text: "Guardado solo en este navegador" };
     }
     return { st, init, save, create, remove, discardIfEmpty, list, get, children, meta: () => meta, setMeta, loadNotes, getNotes, addNote, delNote,
       exportAll, importAll, status, retry, flush, count: () => patients.size };
@@ -1935,10 +2033,10 @@ const HBFua = (() => {
     if (PROFILE_FIXED) { try { if (window.AndroidBridge && window.AndroidBridge.profile) id = window.AndroidBridge.profile() || id; } catch (e) { /* sin dato */ } }
     else if (Store.meta().profile) id = Store.meta().profile;
     const P = C.setProfile(id);
-    document.title = P.name;
+    document.title = P.name; document.documentElement.dataset.app = P.id;
     const h = $("app-name"), sb = $("app-sub");
     if (h) h.textContent = P.name;
-    if (sb) sb.textContent = P.sub + " · NTS N.° 213-MINSA/DGIESP-2024 (RM 251-2024 y RM 429-2024) · Manual HIS de anemia 2024";
+    if (sb) sb.textContent = P.org || "";
     return P;
   }
   const goals2 = () => { const g = goals(); return { c: g.goalC, s: g.goalS, v: g.goalV, e: g.goalE }; };
@@ -2103,6 +2201,7 @@ const HBFua = (() => {
     </section>
     ${C.prof().noFua ? "" : fuaCfgCard()}
     ${securityCard()}
+    <p class="muted" style="padding:0 4px">${esc(C.prof().sub)}. Base normativa: NTS N.° 213-MINSA/DGIESP-2024 (RM 251-2024 y RM 429-2024) y Manual HIS de anemia 2024.</p>
     ${L ? `<section class="card"><h2>Activación</h2><p>Clave colocada el <b>${fmtShort(L.date)}</b>, vigente hasta el <b>${fmtShort(L.expires)}</b>.</p>
       <p class="muted">Código del equipo: <span class="code">${esc(L.code)}</span>. Cada clave dura 40 días; al vencer, la app pide una nueva para este teléfono.</p>
       ${(L.history || []).length > 1 ? `<ul class="rowlist">${L.history.map((h, n) => `<li>Clave ${n + 1}: colocada el ${fmtShort(h.date)}, vigente hasta el ${fmtShort(h.expires)}</li>`).join("")}</ul>` : ""}</section>` : ""}
@@ -2783,8 +2882,23 @@ const HBFua = (() => {
     ["inicio", "pacientes", "reporte", "ajustes"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === route || (t === "pacientes" && route === "paciente"))));
     $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : viewPaciente();
     if (route === "paciente" && ptab === "atenciones") updateLab();
-    renderStatus(); stale = false;
+    renderStatus(); stale = false; hdrSoon();
     if (act) { const el = $(act); if (el) el.focus({ preventScroll: true }); }
+  }
+  // Franja superior: día del periodo y avance de la actividad principal
+  let hdrT = null;
+  function hdrSoon() { clearTimeout(hdrT); hdrT = setTimeout(hdrUpdate, 250); }
+  function hdrUpdate() {
+    const box = $("hdr-prog"); if (!box) return;
+    try {
+      const P = C.prof(), pp = currentPeriod(), G = goals(), R = C.monthReport(Store.list(), pp), t = C.today();
+      const day = pp.future ? 0 : Math.min(pp.days, C.daysBetween(pp.from, t) + 1), done = R.consult.meta, goal = G.goalC || 0;
+      const left = Math.max(1, pp.days - day + 1), need = Math.max(0, goal - done);
+      $("hdr-txt").innerHTML = `<b>${done} de ${goal}</b> ${esc((P.mainMany || "Consultas médicas").toLowerCase())}`;
+      $("hdr-pace").textContent = pp.future ? "El periodo aún no empieza" : "Día " + day + " de " + pp.days + (need ? " · " + C.f1(need / left) + " por día" : " · meta cumplida");
+      $("hdr-bar").style.transform = "scaleX(" + Math.min(1, goal ? done / goal : 0) + ")";
+      box.hidden = false;
+    } catch (e) { box.hidden = true; }
   }
   function refresh() {
     if (!cur) return;

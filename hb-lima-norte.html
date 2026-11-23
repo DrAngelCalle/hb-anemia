@@ -2175,6 +2175,45 @@ const HBFua = (() => {
       </div>
       <div class="actions"><button class="btn" data-act="ses-add">Registrar sesión educativa</button></div>`;
   }
+  /* ===== Respaldo diario por correo (solo en el APK) ===== */
+  const BR = () => window.AndroidBridge;
+  const mailOk = () => { const B = BR(); return !!(B && B.shareBackup && B.setDailyBackup && !B.isWeb); };
+  const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+  function mailState() { try { return JSON.parse(BR().dailyBackupState()) || {}; } catch (e) { return {}; } }
+  function mailCard() {
+    if (!mailOk()) return "";
+    const m = Store.meta().dailyMail || {}, st = mailState(), on = !!st.activo, min = st.minutos != null ? st.minutos : 1200;
+    return `<section class="card"><h2>Respaldo diario por correo</h2>
+      <p class="muted">Cada día, a la hora elegida, el teléfono le avisa con una notificación. Al tocarla e ingresar su PIN se abre el correo con el respaldo completo de sus pacientes adjunto: solo toque Enviar.</p>
+      <label class="check"><input type="checkbox" id="dm-on" ${on ? "checked" : ""}> Recordarme enviar el respaldo todos los días</label>
+      <div class="grid">
+        <label class="field" for="dm-to"><span>Enviar a</span><input type="email" id="dm-to" inputmode="email" autocomplete="email" placeholder="su correo institucional" value="${esc(m.to || "")}"></label>
+        <label class="field" for="dm-time"><span>Hora del aviso</span><input type="time" id="dm-time" value="${hhmm(min)}"></label>
+      </div>
+      ${on && st.notif === false ? `<div class="note warn">Las notificaciones de la app están desactivadas: actívelas en Ajustes del teléfono → Apps → ${esc(C.prof().name)} → Notificaciones, o el aviso no aparecerá.</div>` : ""}
+      <div class="note warn"><b>El respaldo contiene datos de salud de sus pacientes.</b> Envíelo solo a su propio correo institucional, no lo reenvíe y bórrelo cuando ya no lo necesite.</div>
+      <div class="actions"><button class="btn primary" data-act="dm-save">Guardar</button><button class="btn" data-act="dm-now">Enviar respaldo ahora</button></div>
+      <p class="muted">${on ? "Aviso activo todos los días a las " + hhmm(min) + "." : "Aviso desactivado."}${m.last ? " Último envío preparado: " + esc(fmtShort(m.last)) + "." : ""}</p>
+    </section>`;
+  }
+  function sendBackup() {
+    if (!mailOk()) return;
+    const P = C.prof(), t = C.today(), m = Store.meta().dailyMail || {}, list = Store.list().filter((p) => !p.example);
+    const hoy = list.reduce((n, p) => n + p.events.filter((e) => e.date === t).length, 0);
+    let avance = "";
+    try { const pp = currentPeriod(), G = goals(), R = C.monthReport(Store.list(), pp); avance = "\nAvance del periodo (" + fmtShort(pp.from) + " al " + fmtShort(pp.to) + "): " + R.consult.meta + " de " + G.goalC + " " + (P.mainMany || "Consultas médicas").toLowerCase() + "."; } catch (e) { /* sin avance */ }
+    const body = "Respaldo de " + P.name + " del " + fmtDate(t) + ".\n\nPacientes registrados: " + list.length + "\nAtenciones registradas hoy: " + hoy + avance
+      + "\n\nPara restaurarlo: en la app, Ajustes → Respaldo → «Restaurar respaldo», y elija el archivo adjunto descargado.\n\nContiene datos personales de salud: no lo reenvíe.";
+    BR().shareBackup("respaldo_" + P.id + "_" + t + ".json", JSON.stringify(Store.exportAll()), m.to || "", "Respaldo " + P.name + " · " + fmtDate(t), body);
+    Store.setMeta("lastBackup", t); Store.setMeta("dailyMail", Object.assign({}, m, { last: t }));
+  }
+  // Se llama al abrir la app desde la notificación (después del PIN)
+  window.HBRespaldo = (n = 0) => {
+    const B = BR(); if (!B || !B.takeBackupRequest) return;
+    if (!$("lock").hidden) return;                       // se revisa de nuevo al desbloquear
+    if (Store.status().tone === "busy") { if (n < 20) setTimeout(() => window.HBRespaldo(n + 1), 500); return; }
+    if (B.takeBackupRequest()) sendBackup();
+  };
   function viewAjustes() {
     const P = C.prof(), m = Store.meta(), refs = m.labRefs || {}, R0 = refs[refTab] || {}, L = license(), pp = currentPeriod();
     const v = (k, b) => (R0[k] && R0[k][b] != null ? R0[k][b] : "");
@@ -2199,6 +2238,7 @@ const HBFua = (() => {
       </tbody></table></div>
       <div class="actions"><button class="btn" data-act="ref-copy">Copiar estos valores a los otros grupos</button></div>
     </section>
+    ${mailCard()}
     ${C.prof().noFua ? "" : fuaCfgCard()}
     ${securityCard()}
     <p class="muted" style="padding:0 4px">${esc(C.prof().sub)}. Base normativa: NTS N.° 213-MINSA/DGIESP-2024 (RM 251-2024 y RM 429-2024) y Manual HIS de anemia 2024.</p>
@@ -3114,6 +3154,7 @@ const HBFua = (() => {
       const f = onDone; onDone = null; mode = "";
       $("lock").hidden = true; $("lock").innerHTML = ""; document.querySelector("main").inert = false;
       if (f) f();
+      setTimeout(() => window.HBRespaldo && window.HBRespaldo(), 300);
     }
     const weak = (v) => /^(\d)\1{5}$/.test(v) || "01234567890".includes(v) || "09876543210".includes(v);
     function submit() {
@@ -3319,9 +3360,20 @@ const HBFua = (() => {
     else if (a === "copy-report") copyText(reportTxt(), "Informe copiado.", "Informe del periodo");
     else if (a === "dl-report") download(repFile("txt"), reportTxt(), "Informe del periodo");
     else if (a === "dl-csv") download(repFile("csv"), C.csvMonth(Store.list(), reportPeriod()), "Atenciones del periodo (CSV)");
-    else if (a === "backup") { Store.setMeta("lastBackup", C.today()); download("respaldo_hb_lima_norte_" + C.today() + ".json", JSON.stringify(Store.exportAll(), null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }
+    else if (a === "backup") { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(Store.exportAll(), null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }
     else if (a === "restore") $("imp").click();
     else if (a === "retry") Store.retry();
+    else if (a === "dm-save") {
+      const to = $("dm-to").value.trim(), on = $("dm-on").checked, tm = /^(\d{2}):(\d{2})$/.exec($("dm-time").value || "20:00");
+      if (on && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { toast("Escriba un correo válido."); return; }
+      Store.setMeta("dailyMail", Object.assign({}, Store.meta().dailyMail || {}, { to }));
+      BR().setDailyBackup(on, tm ? +tm[1] * 60 + +tm[2] : 1200);
+      render(false); toast(on ? "Aviso diario activado." : "Aviso diario desactivado.");
+    }
+    else if (a === "dm-now") {
+      const to = $("dm-to").value.trim(); if (to) Store.setMeta("dailyMail", Object.assign({}, Store.meta().dailyMail || {}, { to }));
+      sendBackup();
+    }
     else if (a === "ses-add") {
       const date = $("ses-date").value, tema = $("ses-tema").value.trim();
       if (!C.parseDate(date) || !tema) { toast("Escriba la fecha y el tema de la sesión."); return; }

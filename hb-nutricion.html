@@ -3017,7 +3017,7 @@ const HBFua = (() => {
     const rep = cur && cur.events.filter((y) => y.date === x.date).length > 1;
     return `<article class="event"><header><b>${fmtDate(x.date)} · ${esc(x.type)}${rep ? ' <span class="tag warn">Repetida: hay otra atención este día</span>' : ""}</b><span class="actions">${C.prof().noFua ? "" : `<button class="btn small" data-act="fua-open" data-i="${i}">`}${C.prof().noFua ? "" : `${x.fua && x.fua.num ? "FUA " + esc(x.fua.num) : "FUA"}</button>`}<button class="btn small" data-act="edit-event" data-i="${i}">Editar</button><button class="btn small" data-act="del-event" data-i="${i}" style="color:var(--sev);border-color:var(--sev)">Eliminar</button></span></header>
       <dl>
-        <div><dt>Hb observada / ajustada</dt><dd>${C.f1(x.hb)} / ${C.f1(x.hbAdj)} g/dL</dd></div>
+        <div><dt>Hb observada / ajustada</dt><dd>${C.f1(x.hb)} / ${C.f1(x.hbAdj)} g/dL${x.hbFecha ? " · tomada el " + fmtDate(x.hbFecha) : ""}</dd></div>
         <div><dt>Clasificación</dt><dd>${esc(x.clsLabel || "—")}</dd></div>
         <div><dt>Variación de Hb</dt><dd>${x.delta == null ? "—" : (x.delta > 0 ? "+" : "") + C.f1(x.delta) + " g/dL"}</dd></div>
         <div><dt>Peso / talla</dt><dd>${x.weight == null ? "—" : x.weight + " kg"} / ${x.height == null ? "—" : x.height + " cm"}</dd></div>
@@ -3176,9 +3176,9 @@ const HBFua = (() => {
         ${d.type === C.mainType() ? `<label class="field" for="e-lugar"><span>Lugar de la consulta</span>${sel("e-lugar", 'data-e="lugar"', d.lugar || "intramural", [["intramural", "Intramural (en el establecimiento)"], ["extramural", "Extramural (fuera del establecimiento)"]])}</label>` : ""}
         ${d.type === "Visita domiciliaria" ? `<label class="field" for="e-vwhy"><span>Motivo de la visita</span>${sel("e-vwhy", 'data-e="visitWhy"', d.visitWhy || "seguimiento", [["seguimiento", "Seguimiento a los 7–15 días del inicio"], ["inasistencia", "No asistió al control"], ["otro", "Otro motivo"]])}</label>` : ""}
         <label class="field" for="e-dx"><span>Diagnóstico</span>${sel("e-dx", 'data-e="dx"', d.dx, [["auto", "Según la Hb (D649; O990 en gestantes)"], ["none", "Sin diagnóstico de anemia"], ["D649", DXNAME.D649], ["D509", DXNAME.D509], ["O990", DXNAME.O990]])}</label>
-        <label class="field" for="e-hb"><span>Hb observada (g/dL)</span><input type="number" inputmode="decimal" step="0.1" min="0" max="25" id="e-hb" data-e="hb" value="${esc(d.hb)}"></label>
-        <label class="field" for="e-weight"><span>Peso (kg)</span><input type="number" inputmode="decimal" step="0.1" min="0" id="e-weight" data-e="weight" value="${esc(d.weight)}"></label>
-        <label class="field" for="e-height"><span>Talla (cm)</span><input type="number" inputmode="decimal" step="0.1" min="0" id="e-height" data-e="height" value="${esc(d.height)}"></label>
+        <label class="field" for="e-hb"><span>Hb observada (g/dL)</span><input type="number" inputmode="decimal" step="0.1" min="0" max="25" id="e-hb" data-e="hb" value="${esc(d.hb)}"${!d.hb && cur.hb && d.date === fichaTarget(cur) ? ` placeholder="De la ficha: ${esc(cur.hb)}"` : ""}>${d.hbFecha ? `<small>Muestra tomada el ${fmtDate(d.hbFecha)} (fecha de la Hb en la ficha).</small>` : ""}</label>
+        <label class="field" for="e-weight"><span>Peso (kg)</span><input type="number" inputmode="decimal" step="0.1" min="0" id="e-weight" data-e="weight" value="${esc(d.weight)}"${!d.weight && cur.weight && d.date === fichaTarget(cur) ? ` placeholder="De la ficha: ${esc(cur.weight)}"` : ""}></label>
+        <label class="field" for="e-height"><span>Talla (cm)</span><input type="number" inputmode="decimal" step="0.1" min="0" id="e-height" data-e="height" value="${esc(d.height)}"${!d.height && cur.height && d.date === fichaTarget(cur) ? ` placeholder="De la ficha: ${esc(cur.height)}"` : ""}></label>
         <label class="field" for="e-nutri"><span>Estado nutricional</span>${sel("e-nutri", 'data-e="nutri"', d.nutri, [["", "No evaluado"]].concat(C.NUTRI.filter(([k]) => (D.g === "gest") === k.startsWith("gest_"))))}</label>
       </div>
       <h3>Otros diagnósticos y actividades (cualquier patología)</h3>
@@ -3710,11 +3710,17 @@ const HBFua = (() => {
     render(false);
     if (push) window.scrollTo(0, 0);
   }
+  function draftToday() {
+    if (!cur || (draft && draft.i != null) || (draft && (draft.hb || draft.notes || (draft.dxOtros || []).length))) return;
+    const i = cur.events.findIndex((e) => e.date === C.today());
+    if (i >= 0) draft = draftFromEvent(i);
+  }
   function openPatient(id, tabName) {
     const p = Store.get(id); if (!p) return;
     if (cur && cur !== p) Store.discardIfEmpty(cur);
     cur = p; draft = blankDraft(); dOpen = {}; lk = { q: "", as: "mother" };
     ptab = tabName || (p.dob ? "atenciones" : "ficha"); fuaI = null; fuaD = null;
+    if (ptab === "atenciones") draftToday();
     setRoute("paciente", true);
   }
   function newPatient(fields) {
@@ -3780,8 +3786,9 @@ const HBFua = (() => {
       return;
     }
     // Datos tomados en la ficha el mismo día (Hb, peso y talla) completan la atención si se dejaron vacíos
-    const fichaDay = date === (C.parseDate(p.hbDate) ? p.hbDate : t);
-    const hb = C.num(d.hb) != null ? C.num(d.hb) : fichaDay && p.hbDate === date ? C.num(p.hb) : null;
+    const fichaDay = date === fichaTarget(p) && d.i == null;
+    const hb = C.num(d.hb) != null ? C.num(d.hb) : fichaDay && C.num(p.hb) != null && !p.events.some((e) => C.num(e.hb) === C.num(p.hb) && (e.date === p.hbDate || e.hbFecha === p.hbDate)) ? C.num(p.hb) : null;
+    const hbFecha = C.num(d.hb) != null ? d.hbFecha || "" : hb != null && p.hbDate !== date ? p.hbDate : "";
     const w = C.num(d.weight) != null ? C.num(d.weight) : fichaDay ? C.num(p.weight) : null, h = C.num(d.height) != null ? C.num(d.height) : fichaDay ? C.num(p.height) : null, adh = C.num(d.adherence);
     const others = p.events.filter((e, i) => i !== d.i);
     const firstHb = hb != null && (p.hb === "" || p.hb == null);
@@ -3801,7 +3808,7 @@ const HBFua = (() => {
     if (dx === "auto") dx = had && p.mode === "treatment" ? had.dx : anemia ? (g === "gest" ? "O990" : "D649") : "";
     const ds = p.mode === "treatment" && C.parseDate(p.start) ? C.daysBetween(p.start, date) : null;
     const pl = C.plan(g, age, pv, D.cls.status === "pend" ? cls : D.cls, p.mode);
-    const ev = { id: d.i != null ? p.events[d.i].id : newId("e"), date, type: d.type, hb, hbAdj, clsLabel: hbAdj == null ? "" : cls.label, sev: hbAdj == null ? "" : (cls.his || ""), anemia, g, am: age ? age.months : null,
+    const ev = { id: d.i != null ? p.events[d.i].id : newId("e"), date, type: d.type, hb, hbFecha: hb != null && C.parseDate(hbFecha) && hbFecha !== date ? hbFecha : "", hbAdj, clsLabel: hbAdj == null ? "" : cls.label, sev: hbAdj == null ? "" : (cls.his || ""), anemia, g, am: age ? age.months : null,
       delta, weight: w, height: h, adherence: adh, adverse: d.tol === "efectos" ? d.adverse.slice() : [], ram: !!d.ram, ramNote: (d.ramNote || "").trim(), dx, orders: d.orders.slice(), res: cleanRes(d.res), resEval: !!d.resEval,
       ref: d.ref, refDest: (d.refDest || "").trim(), refReason: (d.refReason || "").trim(), mode: p.mode, dStart: ds != null && ds >= 0 ? ds : null, dose: pl.title, notes: (d.notes || "").trim(),
       decision: hbAdj == null && adh == null ? "" : C.assess({ mode: p.mode, hbAdj, prevAdj, cls, daysFromStart: ds, adherence: adh }),
@@ -3826,7 +3833,7 @@ const HBFua = (() => {
     return { i, date: e.date, type: e.type, hb: s(e.hb), weight: s(e.weight), height: s(e.height), adherence: s(e.adherence), dx: e.dx || "none", orders: (e.orders || []).slice(), res: Object.assign({}, e.res || {}),
       resEval: !!e.resEval, adverse: (e.adverse || []).slice(), ram: !!e.ram, ramNote: e.ramNote || "", ref: e.ref || "", refDest: e.refDest || "", refReason: e.refReason || "", notes: e.notes || "",
       comorb: (e.comorb || []).slice(), comorbTx: e.comorbTx || "", tol: (e.adverse || []).length ? "efectos" : e.tol || "", medidas: (e.medidas || []).slice(), medidasTxt: e.medidasTxt || "",
-      coord: (e.coord || []).slice(), consej: !!e.consej, regHC: !!e.regHC, regHIS: !!e.regHIS, nutri: e.nutri || "", lugar: e.lugar || "", visitWhy: e.visitWhy || "", hemDias: e.hemDias == null ? "" : e.hemDias, consejHem: !!e.consejHem, dxOtros: clone(e.dxOtros || []) };
+      coord: (e.coord || []).slice(), consej: !!e.consej, regHC: !!e.regHC, regHIS: !!e.regHIS, nutri: e.nutri || "", lugar: e.lugar || "", visitWhy: e.visitWhy || "", hemDias: e.hemDias == null ? "" : e.hemDias, consejHem: !!e.consejHem, dxOtros: clone(e.dxOtros || []), hbFecha: e.hbFecha || "" };
   }
   function editEvent(i) { const d = draftFromEvent(i); if (!d) return; draft = d; render(false); window.scrollTo(0, $("summary").offsetTop); }
 
@@ -3847,25 +3854,36 @@ const HBFua = (() => {
   }
 
   /* ===== Datos de la ficha (Hb y su fecha, peso, talla) → atención de ese día: Evaluación, Atenciones, HIS y FUA ===== */
+  // Atención donde caen los datos de la ficha: la del día de la Hb si ya existe; si la Hb es de los últimos 30 días, la de hoy
+  // (la consulta en que se llenó la ficha); una Hb más antigua queda solo como antecedente de la ficha
+  function fichaTarget(p) {
+    const hd = C.parseDate(p.hbDate) ? p.hbDate : "", t = C.today();
+    if (hd && p.events.some((e) => e.date === hd)) return hd;
+    if (!hd || hd === t) return t;
+    const ago = C.daysBetween(hd, t);
+    return ago >= 0 && ago <= 30 ? t : hd;
+  }
   function syncFicha(what) {
     const p = cur; if (!p || p.example || !C.parseDate(p.dob)) return;
     const hb = C.num(p.hb), w = C.num(p.weight), h = C.num(p.height);
-    const date = C.parseDate(p.hbDate) ? p.hbDate : C.today();
+    const date = fichaTarget(p);
     const i = p.events.findIndex((e) => e.date === date);
     if (i < 0 && hb == null) return;                       // sin Hb no se crea una atención solo por el peso
+    if (i < 0 && date !== C.today() && !p.events.length) return;   // Hb antigua sin atenciones: solo antecedente
     const e = i >= 0 ? p.events[i] : null;
-    const same = e && (hb == null || C.num(e.hb) === hb) && (w == null || C.num(e.weight) === w) && (h == null || C.num(e.height) === h);
+    const hf = C.parseDate(p.hbDate) && p.hbDate !== date ? p.hbDate : "";
+    const same = e && (hb == null || (C.num(e.hb) === hb && (e.hbFecha || "") === hf)) && (w == null || C.num(e.weight) === w) && (h == null || C.num(e.height) === h);
     if (same) return;
     const keep = draft, keepTab = ptab, keepFua = fuaI;
     const d = i >= 0 ? draftFromEvent(i) : Object.assign(blankDraft(), { date, dx: "auto" });
-    if (hb != null) d.hb = String(hb);
+    if (hb != null) { d.hb = String(hb); d.hbFecha = C.parseDate(p.hbDate) && p.hbDate !== date ? p.hbDate : ""; }
     if (w != null) d.weight = String(w);
     if (h != null) d.height = String(h);
     draft = d;
     saveEvent();
     if (keep && keep.i == null && keep.date !== date) draft = keep;
     ptab = keepTab; fuaI = keepFua; fuaD = null; render(false);
-    toast((what === "hb" ? "Hb del " + fmtDate(date) : "Peso y talla") + (i < 0 ? ": atención del " + fmtDate(date) + " creada" : " actualizados") + " en Evaluación, Atenciones, HIS y FUA.");
+    toast((what === "hb" ? "Hb" + (C.parseDate(p.hbDate) ? " del " + fmtDate(p.hbDate) : "") : "Peso y talla") + (i < 0 ? ": atención del " + fmtDate(date) + " creada" : " actualizados") + " en Evaluación, Atenciones, HIS y FUA.");
   }
 
   /* ================= Diálogos y archivos ================= */
@@ -4158,7 +4176,7 @@ const HBFua = (() => {
     else if (a === "open") openPatient(b.dataset.id);
     else if (a === "new-patient") newPatient();
     else if (a === "more") { listLimit += 60; render(false); }
-    else if (a === "ptab") { ptab = PTABS.includes(b.dataset.to) ? b.dataset.to : "ficha"; render(false); window.scrollTo(0, 0); }
+    else if (a === "ptab") { ptab = PTABS.includes(b.dataset.to) ? b.dataset.to : "ficha"; if (ptab === "atenciones") draftToday(); render(false); window.scrollTo(0, 0); }
     else if (a === "mode") { setP("mode", b.dataset.to); render(false); }
     else if (a === "save-event") saveEvent();
     else if (a === "edit-event") editEvent(Number(b.dataset.i));

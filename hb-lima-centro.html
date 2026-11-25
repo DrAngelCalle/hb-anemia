@@ -1911,7 +1911,8 @@ const HBFua = (() => {
     if (nu && ev.nutri && NUTRI_DX[ev.nutri] != null) addDx(NUTRI_DX[ev.nutri], "D", NUTRI_DX[ev.nutri] ? "" : "DESNUTRICIÓN PROTEICOCALÓRICA (ELIJA E43X SEVERA, E440 MODERADA O E441 LEVE)");
     (ev.comorb || []).forEach((c) => { const code = COMORB_DX[c]; f.dxs.push({ desc: code ? DX[code].toUpperCase() : (ev.comorbTx || "OTRA COMORBILIDAD").toUpperCase(), code: code || "", type: "D" }); });
     const isProc = (c) => /^(\d{5}|C\d{4}|D\d{4})/.test(String(c || ""));
-    (ev.dxOtros || []).forEach((o) => { if (o && o.code && !isProc(o.code)) addDx(o.code, o.type || "D", o.desc || ""); });   // cualquier patología elegida por nombre
+    const otros = [].concat(ev.dxOtros || [], (ev.his && ev.his.otros) || [], p.hisFor === ev.id && p.his ? p.his.otros || [] : []);
+    otros.forEach((o) => { if (o && o.code && !isProc(o.code)) addDx(o.code, o.type || "D", o.desc || ""); });   // cualquier patología elegida por nombre
     if (!f.dxs.length) f.dxs.push({ desc: DX["Z71.9"].toUpperCase(), code: "Z71.9", type: "D" });
     const dx1 = "1";
     // Medicamentos: hierro según el plan vigente
@@ -1930,7 +1931,7 @@ const HBFua = (() => {
       f.procs.push({ code: L[2] || "", name: L[1], ind: "1", eje: done ? "1" : "", dx: dx1, res: "" });
     });
     // Subcomponente prestacional: siempre medicina general o especializada, o atención en nutrición
-    (ev.dxOtros || []).forEach((o) => { if (o && o.code && isProc(o.code) && !f.procs.some((x) => x.code === o.code)) f.procs.push({ code: o.code, name: String(o.desc || "").toUpperCase(), ind: "1", eje: "1", dx: dx1, res: o.lab || "" }); });
+    otros.forEach((o) => { if (o && o.code && isProc(o.code) && !/^99499/.test(o.code) && !f.procs.some((x) => x.code === o.code)) f.procs.push({ code: o.code, name: String(o.desc || "").toUpperCase(), ind: "1", eje: "1", dx: dx1, res: o.lab || "" }); });
     const addSub = (code) => { if (!f.sub.some((x) => x.code === code)) f.sub.push({ code, name: SUB[code] || "", ind: "1", eje: "1", dx: dx1 }); };
     addSub(nu ? "99209" : cfg.sub);
     const supp = prev && pl.supp && SUB[pl.supp];
@@ -1948,12 +1949,10 @@ const HBFua = (() => {
     const it = (ok, t, why) => items.push({ ok: !!ok, t, why: ok ? "" : why });
     it(f.date && /^\d{2}:\d{2}$/.test(f.hora || "") && f.prest && f.ups, "Fecha, hora y código prestacional",
       !f.hora ? "Falta la hora de atención." : !f.prest ? "Falta el código prestacional (registre la fecha de nacimiento)." : "Falta el código UPS.");
-    const adult = f.gest || f.puerp || ["303", "304", "305"].includes(f.prest);
-    it(f.peso && f.talla && (!adult || f.pa), "Signos vitales, peso y talla", !f.peso || !f.talla ? "Falta el peso o la talla." : "Falta la presión arterial.");
+    it(f.peso && f.talla, "Peso y talla", !f.peso && !f.talla ? "Falta el peso y la talla." : !f.peso ? "Falta el peso." : "Falta la talla.");   // signos vitales: opcionales
     if (!nd || f.dxs.some((d) => (d.code || d.desc) && (!d.code || !d.type))) bad.push("Cada diagnóstico debe tener su CIE-10 y su tipo (P, D o R).");
     if (codes.length && codes.every((c) => /^R\d/.test(c))) bad.push("Un diagnóstico sindrómico R00–R99 debe ir con un segundo diagnóstico presuntivo.");
     if (f.gest && codes.some((c) => /^D(50|64)/.test(c))) bad.push("En gestantes los CIE-10 de anemia inician con «O» (O990).");
-    if (f.gest && (!f.fpp || !f.eg)) bad.push("En gestantes registre la fecha probable de parto y la edad gestacional.");
     it(!bad.length, "Diagnósticos con su CIE-10", bad.join(" "));
     const bad2 = [];
     const okDx = (d) => { const n = parseInt(d, 10); return n >= 1 && n <= nd; };
@@ -1968,9 +1967,6 @@ const HBFua = (() => {
       it(med === 1, "Código de medicina general o especializada", med ? "Registre solo uno: 99214 o 99215." : "Falta 99214 (medicina general) o 99215 (especializada).");
     }
     if (f.sub.some((s) => /^99199\.(17|19|27)$/.test(s.code)) && !f.sub.some((s) => s.code === "99403.01")) items[items.length - 1] = { ok: false, t: items[items.length - 1].t, why: "La suplementación exige 99403.01 (consejería nutricional), regla RC 88." };
-    const r = f.resp || {};
-    it(f.checked && r.dni && r.nombre && r.coleg && f.renipress && f.lote, "Firmas y concordancia con la historia clínica",
-      !r.dni || !r.nombre || !r.coleg ? "Complete sus datos de responsable en Ajustes → FUA." : !f.renipress || !f.lote ? "Complete el código RENIPRESS y el lote del FUA en Ajustes → FUA." : "Confirme que verificó las firmas y la concordancia con la historia clínica.");
     return items;
   }
 
@@ -3045,14 +3041,15 @@ const HBFua = (() => {
   }
   function fuaFor(i) {
     const ev = cur.events[i]; if (!ev) return null;
-    if (ev.fua) return clone(ev.fua);
+    // FUA guardado: se completa con lo registrado después en la atención o en su HIS (peso, talla, Hb, diagnósticos)
+    if (ev.fua) return fuaRefresh(clone(ev.fua), Object.assign({}, ev, { dxOtros: [].concat(ev.dxOtros || [], (ev.his && ev.his.otros) || [], cur.hisFor === ev.id ? cur.his.otros || [] : []) }));
     const f = HBFua.build(cur, ev, Store.meta(), fuaCtx(cur, ev));
     return f;
   }
   function openFua(i) { fuaI = i; fuaD = fuaFor(i); ptab = "fua"; render(false); window.scrollTo(0, 0); }
   function fuaCheckHtml(f) {
     const it = HBFua.check(f), miss = it.filter((x) => !x.ok).length;
-    return `<p><span class="tag ${miss ? "warn" : "ok"}">${miss ? "Faltan " + miss + " de 6 puntos" : "FUA completo"}</span></p>
+    return `<p><span class="tag ${miss ? "warn" : "ok"}">${miss ? "Faltan " + miss + " de " + it.length + " puntos" : "FUA completo"}</span></p>
       <ul class="fuachk">${it.map((x) => `<li data-ok="${x.ok ? 1 : 0}"><b>${x.ok ? "✓" : "!"}</b><span>${esc(x.t)}${x.why ? `<small>${esc(x.why)}</small>` : ""}</span></li>`).join("")}</ul>`;
   }
   function updateFuaCheck() { const el = $("fua-check"); if (el && fuaD) el.innerHTML = fuaCheckHtml(fuaD); const im = $("fua-imc"); if (im && fuaD) im.textContent = HBFua.imcOf(fuaD.peso, fuaD.talla) || "—"; }
@@ -3129,7 +3126,6 @@ const HBFua = (() => {
     </section>
     <section class="card"><h3>Observaciones y cierre</h3>
       <label class="field"><span>Observaciones</span><textarea data-fu="obs" rows="3">${esc(f.obs)}</textarea></label>
-      <label class="check"><input type="checkbox" data-fu="checked" ${f.checked ? "checked" : ""}> Verifiqué las firmas y la concordancia de este FUA con la historia clínica</label>
       <div class="actions"><button class="btn primary" data-act="fua-save">Guardar FUA</button><button class="btn" data-act="fua-print">Imprimir o guardar PDF</button><button class="btn" data-act="fua-dl">Descargar FUA (.html)</button></div>
       <p class="muted">Responsable: ${esc(f.resp.nombre || "sin datos")} · CMP ${esc(f.resp.coleg || "—")}. Herramienta de apoyo: verifique la vigencia de los códigos con su IPRESS.</p>
     </section>`;
@@ -3289,11 +3285,11 @@ const HBFua = (() => {
   // FUA ya guardado: se actualiza con los datos corregidos de la atención (peso, talla, Hb, diagnósticos)
   function fuaRefresh(f, ev) {
     if (!f) return f;
-    if (ev.weight != null) f.peso = String(ev.weight);
-    if (ev.height != null) f.talla = String(ev.height);
+    if (ev.weight != null) f.peso = String(ev.weight); else if (!f.peso && cur && cur.weight) f.peso = String(cur.weight);
+    if (ev.height != null) f.talla = String(ev.height); else if (!f.talla && cur && cur.height) f.talla = String(cur.height);
     if (ev.hb != null) { const pr = (f.procs || []).find((x) => x.code === "85018.01"); if (pr) pr.res = String(ev.hb); }
     (ev.dxOtros || []).forEach((o) => {
-      if (HBHisCat.isProc(o.code)) { if (!(f.procs || []).some((d) => d.code === o.code)) (f.procs = f.procs || []).push({ code: o.code, name: String(o.desc || "").toUpperCase(), ind: "1", eje: "1", dx: "1", res: o.lab || "" }); }
+      if (HBHisCat.isProc(o.code)) { if (/^99499/.test(o.code)) return; if (!(f.procs || []).some((d) => d.code === o.code)) (f.procs = f.procs || []).push({ code: o.code, name: String(o.desc || "").toUpperCase(), ind: "1", eje: "1", dx: "1", res: o.lab || "" }); }
       else if (!f.dxs.some((d) => d.code === o.code)) f.dxs.push({ desc: String(o.desc || "").toUpperCase(), code: o.code, type: o.type || "D" });
     });
     return f;

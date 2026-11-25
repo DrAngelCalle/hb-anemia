@@ -546,6 +546,13 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 .cie-sel .cie-lab { width: 4.8em; min-height: 44px; text-transform: uppercase; }
 .cie-sel .cie-tx small { display: block; margin-top: 2px; }
 
+/* Sesiones educativas: fotos de la lista de asistencia */
+.ses-fotos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.ses-fotos li { display: flex; flex-direction: column; gap: 6px; }
+.ses-fotos img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line, #d6dbe1); border-radius: 8px; background: #fff; }
+.ses-big { display: block; width: 100%; height: auto; margin: 8px 0; border: 1px solid var(--line, #d6dbe1); border-radius: 8px; }
+#modal-body .ses-big + .ses-big { margin-top: 4px; }
+
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
@@ -2309,6 +2316,9 @@ const HBFua = (() => {
         const have = new Set((notes[ym] || []).map((x) => x.id));
         notes[ym] = (notes[ym] || []).concat(j.notes[ym].filter((x) => x && !have.has(x.id))); saveNotes(ym);
       });
+      // Sesiones educativas del respaldo (las fotos de la lista se restauran aparte)
+      const ses = j.meta && Array.isArray(j.meta.sesiones) ? j.meta.sesiones.filter((x) => x && typeof x.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(x.id)) : [];
+      if (ses.length) { const have = new Set((meta.sesiones || []).map((x) => x.id)); const add = ses.filter((x) => !have.has(x.id)); if (add.length) setMeta("sesiones", (meta.sesiones || []).concat(add)); }
       return n;
     }
     function status() {
@@ -2344,7 +2354,7 @@ const HBFua = (() => {
   })();
 
   /* ================= Estado de la interfaz ================= */
-  const ROUTES = ["inicio", "pacientes", "paciente", "reporte", "ajustes"], PTABS = ["ficha", "evaluacion", "atenciones", "his", "fua"];
+  const ROUTES = ["inicio", "pacientes", "paciente", "reporte", "ajustes", "sesiones"], PTABS = ["ficha", "evaluacion", "atenciones", "his", "fua"];
   let route = "inicio", ptab = "ficha", cur = null, q = "", listLimit = 40, draft = blankDraft(), lk = { q: "", as: "mother" };
   let repYm = "", noteDraft = blankNote(), DL = null, stale = false, dOpen = {}, refTab = "m0";
 
@@ -2488,12 +2498,12 @@ const HBFua = (() => {
         <div class="tile"><span class="lab">${esc(C.prof().mainMany || "Consultas médicas")} del periodo</span><span class="val">${R.consult.meta} <small>de ${G.goalC}</small></span>${meter(R.consult.meta, G.goalC)}<small>${faltaC ? "Faltan " + faltaC : "Meta cumplida"}</small></div>
         <div class="tile"><span class="lab">${esc(P.secondLabel)} del periodo</span><span class="val">${S.meta} <small>de ${G.goalS}</small></span>${meter(S.meta, G.goalS)}<small>${P.secondKey === "tele" ? R.tele.in715 + " entre los días 7 y 15 del tratamiento · " : ""}${faltaS ? "faltan " + faltaS : "meta cumplida"}</small></div>
         ${P.goalV ? `<div class="tile"><span class="lab">Visitas domiciliarias del periodo</span><span class="val">${R.visit.meta} <small>de ${G.goalV}</small></span>${meter(R.visit.meta, G.goalV)}<small>${R.visit.in715} entre los días 7 y 15 · ${R.visit.inasist} por inasistencia</small></div>
-        <div class="tile"><span class="lab">Sesiones educativas del periodo</span><span class="val">${sesionesIn(pp).length} <small>de ${G.goalE}</small></span>${meter(sesionesIn(pp).length, G.goalE)}<small><button type="button" class="linkbtn" data-act="route" data-to="reporte">Registrar en Informe</button></small></div>` : ""}
+        <div class="tile"><span class="lab">Sesiones educativas del periodo</span><span class="val">${sesionesIn(pp).length} <small>de ${G.goalE}</small></span>${meter(sesionesIn(pp).length, G.goalE)}<small><button type="button" class="linkbtn" data-act="ses-new">Registrar sesión educativa</button></small></div>` : ""}
         <div class="tile"><span class="lab">Ritmo necesario</span><span class="val">${C.f1(faltaC / left)} <small>consultas por día</small></span><small>${C.f1(faltaS / left)} ${esc(P.secondMany)} por día · ${left === 1 ? "hoy es el último día del periodo" : "quedan " + left + " días, contando hoy"}</small></div>
       </div>
       <p class="muted">Solo suman a las metas las atenciones a ${esc(P.targetText)}.</p>
       ${chartHtml(R, pp, G.goalC, idx)}
-      <div class="actions"><button class="btn" data-act="route" data-to="reporte">Ver informe del periodo →</button></div>
+      <div class="actions"><button class="btn" data-act="route" data-to="reporte">Ver informe del periodo →</button><button class="btn" data-act="ses-new">Registrar sesión educativa</button></div>
     </section>
     ${(() => { const n = C.dupGroups(list).reduce((t, g) => t + g.idx.length - 1, 0); return n ? `<div class="note warn"><b>${n} ${n === 1 ? "atención repetida" : "atenciones repetidas"} el mismo día.</b> En la meta cuenta una por paciente por día. <button type="button" class="linkbtn" data-act="route" data-to="ajustes">Revisar y eliminar en Ajustes</button></div>` : ""; })()}
     <section class="card"><h2>Atenciones de hoy (${todays.length})</h2>
@@ -2531,17 +2541,118 @@ const HBFua = (() => {
   function sesionesCard(pp) {
     const L = sesionesIn(pp), total = L.reduce((t, x) => t + (parseInt(x.asist, 10) || 0), 0);
     return `<h3>Sesiones educativas</h3>
-      <p class="muted">Sobre prevención y tratamiento de anemia, dirigidas a madres y cuidadores de menores de 36 meses y a gestantes.</p>
-      ${L.length ? `<ul class="rowlist">${L.map((x) => `<li>${fmtDate(x.date)} · ${esc(x.tema)}${x.pob ? " · " + esc(x.pob) : ""}${x.lugar ? " · " + esc(x.lugar) : ""}${x.asist ? " · " + esc(x.asist) + " participantes" : ""} <button class="btn small" data-act="ses-del" data-id="${esc(x.id)}">Quitar</button></li>`).join("")}</ul><p class="muted">${L.length} sesiones · ${total} participantes.</p>` : `<p class="muted">Aún no registra sesiones en este periodo.</p>`}
-      <div class="grid">
-        <label class="field" for="ses-date"><span>Fecha</span><input type="date" id="ses-date" value="${C.today() >= pp.from && C.today() <= pp.to ? C.today() : pp.from}" min="${pp.from}" max="${pp.to}"></label>
-        <label class="field" for="ses-tema"><span>Tema</span><input id="ses-tema" placeholder="Ej.: Alimentos ricos en hierro"></label>
-        <label class="field" for="ses-pob"><span>Dirigida a</span>${sel("ses-pob", "", "Madres y cuidadores de menores de 36 meses y gestantes", [["Madres y cuidadores de menores de 36 meses y gestantes", "Menores de 36 meses y gestantes"], ["Madres y cuidadores de menores de 36 meses", "Menores de 36 meses"], ["Gestantes", "Gestantes"]])}</label>
-        <label class="field" for="ses-lugar"><span>Lugar</span><input id="ses-lugar" placeholder="Ej.: Sala de espera, comedor popular"></label>
-        <label class="field" for="ses-asist"><span>N° de participantes</span><input type="number" inputmode="numeric" min="0" id="ses-asist"></label>
-      </div>
-      <div class="actions"><button class="btn" data-act="ses-add">Registrar sesión educativa</button></div>`;
+      ${L.length ? `<ul class="rowlist">${L.map((x) => `<li>${fmtDate(x.date)} · ${esc(x.tema)}${x.lugar ? " · " + esc(x.lugar) : ""}${x.asist ? " · " + esc(x.asist) + " participantes" : ""}${(x.fotos || []).length ? " · lista de asistencia (" + x.fotos.length + (x.fotos.length === 1 ? " foto)" : " fotos)") : ""} <button class="btn small" data-act="ses-view" data-id="${esc(x.id)}">Ver</button></li>`).join("")}</ul><p class="muted">${L.length} sesiones · ${total} participantes.</p>` : `<p class="muted">Aún no registra sesiones en este periodo.</p>`}
+      <div class="actions"><button class="btn" data-act="ses-new">Registrar sesión educativa</button><button class="btn" data-act="route" data-to="sesiones">Ver todas las sesiones</button></div>`;
   }
+
+  /* ================= Sesiones educativas: fecha, tema, lugar y foto de la lista de asistencia ================= */
+  let sesD = null;            // borrador: { id?, date, tema, lugar, pob, asist, his, fotos: [{ k, data, nueva }], quitar: [k] }
+  const SES_POB = [["Madres y cuidadores de menores de 36 meses y gestantes", "Madres y cuidadores de menores de 36 meses y gestantes"], ["Madres y cuidadores de menores de 36 meses", "Madres y cuidadores de menores de 36 meses"], ["Gestantes", "Gestantes"], ["Adolescentes", "Adolescentes"], ["Población general", "Población general"]];
+  const sesPid = (id) => "ses_" + id;
+  function sesBlank() { return { date: C.today(), tema: "", lugar: "", pob: SES_POB[0][0], asist: "", his: "C0009", fotos: [], quitar: [] }; }
+  function sesNew() { sesD = sesBlank(); setRoute("sesiones", true); }
+  async function sesEdit(id) {
+    const x = (Store.meta().sesiones || []).find((s) => s.id === id); if (!x) return;
+    sesD = Object.assign(sesBlank(), clone(x), { fotos: [], quitar: [] });
+    setRoute("sesiones", true);
+    const fotos = [];
+    for (const k of x.fotos || []) { const data = await Store.photoGet(sesPid(id), k); if (data) fotos.push({ k, data }); }
+    if (sesD && sesD.id === id) { sesD.fotos = fotos; render(true); }
+  }
+  function viewSesiones() {
+    const all = (Store.meta().sesiones || []).slice().sort((a, b) => (a.date < b.date ? 1 : -1)), d = sesD || sesBlank();
+    const f = (k, label, attrs) => `<label class="field" for="sd-${k}"><span>${label}</span><input id="sd-${k}" data-sd="${k}" value="${esc(d[k])}" ${attrs || ""}></label>`;
+    return `<div class="actions"><button class="btn" data-act="route" data-to="reporte">← Informe</button></div>
+    <section class="card" id="ses-form"><h2>${d.id ? "Editar sesión educativa del " + fmtDate(d.date) : "Registrar sesión educativa"}</h2>
+      <div class="grid">
+        ${f("date", "Fecha", `type="date" max="${C.today()}"`)}
+        ${f("tema", "Tema", 'placeholder="Ej.: Alimentos ricos en hierro" autocomplete="off"')}
+        ${f("lugar", "Lugar donde se impartió", 'placeholder="Ej.: Sala de espera del EE.SS., comedor popular, I.E. N.° 123" autocomplete="off"')}
+        <label class="field" for="sd-pob"><span>Dirigida a</span>${sel("sd-pob", 'data-sd="pob"', d.pob, SES_POB.some(([v]) => v === d.pob) ? SES_POB : SES_POB.concat([[d.pob, d.pob]]))}</label>
+        ${f("asist", "N.° de participantes", 'type="number" inputmode="numeric" min="0" step="1"')}
+        <label class="field" for="sd-his"><span>Código HIS</span>${sel("sd-his", 'data-sd="his"', d.his || "C0009", [["C0009", "C0009 · Sesión educativa"], ["C0010", "C0010 · Sesión demostrativa"]])}</label>
+      </div>
+      <h3>Lista de asistencia</h3>
+      ${d.fotos.length ? `<ul class="ses-fotos">${d.fotos.map((p, i) => `<li><img src="${p.data}" alt="Lista de asistencia, foto ${i + 1}"><button type="button" class="btn small" data-act="ses-foto-del" data-i="${i}">Quitar foto ${i + 1}</button></li>`).join("")}</ul>` : `<p class="muted">Tome una foto de cada hoja de la lista de asistencia firmada. Queda guardada dentro de este registro.</p>`}
+      <div class="actions">
+        <label class="btn" for="ses-cam">${d.fotos.length ? "Tomar foto de otra hoja" : "Tomar foto de la lista"}</label><input type="file" id="ses-cam" accept="image/*" capture="environment" data-sesfoto="1" class="vh">
+        <label class="btn" for="ses-gal">Elegir de la galería</label><input type="file" id="ses-gal" accept="image/*" multiple data-sesfoto="1" class="vh">
+      </div>
+      <div class="actions"><button class="btn primary" data-act="ses-save">${d.id ? "Guardar cambios" : "Guardar sesión educativa"}</button>${d.id ? `<button class="btn" data-act="ses-cancel">Cancelar edición</button>` : ""}</div>
+      <p class="muted">En el HIS se registra con ${esc(d.his || "C0009")} una fila por cada participante (Manual HIS adolescente 2026).</p>
+    </section>
+    <section class="card"><h2>Sesiones registradas (${all.length})</h2>
+      ${all.length ? `<ul class="rowlist">${all.map((x) => `<li><b>${fmtDate(x.date)}</b> · ${esc(x.tema)}${x.lugar ? " · " + esc(x.lugar) : ""}${x.asist ? " · " + esc(x.asist) + " participantes" : ""} · ${(x.fotos || []).length ? (x.fotos.length === 1 ? "1 foto de la lista" : x.fotos.length + " fotos de la lista") : "sin foto de la lista"}
+        <span class="actions"><button class="btn small" data-act="ses-view" data-id="${esc(x.id)}">Ver</button><button class="btn small" data-act="ses-edit" data-id="${esc(x.id)}">Editar</button><button class="btn small" data-act="ses-del" data-id="${esc(x.id)}" style="color:var(--sev);border-color:var(--sev)">Eliminar</button></span></li>`).join("")}</ul>` : `<p class="muted">Aún no hay sesiones registradas.</p>`}
+    </section>`;
+  }
+  async function sesAddFiles(files) {
+    if (!sesD) sesD = sesBlank();
+    let n = 0;
+    for (const file of Array.from(files || [])) {
+      try { sesD.fotos.push({ k: "l" + Date.now().toString(36) + n, data: await shrink(file, 1600, 0.72), nueva: true }); n++; } catch (e) { toast("No se pudo abrir una de las fotos."); }
+    }
+    if (n) { render(true); toast(n === 1 ? "Foto de la lista agregada. Guarde la sesión para conservarla." : n + " fotos agregadas. Guarde la sesión para conservarlas."); }
+  }
+  async function sesSave() {
+    const d = sesD || sesBlank();
+    if (!C.parseDate(d.date)) { toast("Escriba la fecha de la sesión."); $("sd-date").focus(); return; }
+    if (!String(d.tema).trim()) { toast("Escriba el tema de la sesión."); $("sd-tema").focus(); return; }
+    if (!String(d.lugar).trim()) { toast("Escriba dónde se impartió la sesión."); $("sd-lugar").focus(); return; }
+    const id = d.id || Date.now().toString(36);
+    try {
+      for (const p of d.fotos) if (p.nueva) await Store.photoPut(sesPid(id), p.k, p.data);
+      for (const k of d.quitar) await Store.photoDel(sesPid(id), k);
+    } catch (e) { toast("No se pudo guardar la foto en este equipo: " + (e.message || "error")); return; }
+    const rec = { id, date: d.date, tema: String(d.tema).trim(), lugar: String(d.lugar).trim(), pob: d.pob, asist: String(d.asist || "").trim(), his: d.his || "C0009", fotos: d.fotos.map((p) => p.k), saved: C.today() };
+    const L = (Store.meta().sesiones || []).filter((x) => x.id !== id); L.push(rec);
+    Store.setMeta("sesiones", L); sesD = sesBlank(); render(false);
+    toast("Sesión educativa guardada" + (rec.fotos.length ? " con " + (rec.fotos.length === 1 ? "la foto" : rec.fotos.length + " fotos") + " de la lista de asistencia." : "."));
+  }
+  async function sesDelete(id) {
+    const x = (Store.meta().sesiones || []).find((s) => s.id === id); if (!x) return;
+    for (const k of x.fotos || []) await Store.photoDel(sesPid(id), k);
+    Store.setMeta("sesiones", (Store.meta().sesiones || []).filter((s) => s.id !== id));
+    if (sesD && sesD.id === id) sesD = sesBlank();
+    render(false); toast("Sesión eliminada.");
+  }
+  async function sesHtml(x) {
+    const e = esc, fotos = [];
+    for (const k of x.fotos || []) { const data = await Store.photoGet(sesPid(x.id), k); if (data) fotos.push(data); }
+    return { fotos, html: `<!DOCTYPE html><html lang="es-PE"><head><meta charset="utf-8"><title>Sesión educativa ${e(x.date)}</title><style>
+      body { font: 12px/1.45 Arial, sans-serif; color: #000; margin: 18px; } h1 { font-size: 16px; margin: 0 0 8px; } table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+      th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #bbb; vertical-align: top; } th { width: 30%; } img { width: 100%; max-width: 760px; display: block; margin: 8px 0 14px; border: 1px solid #999; page-break-inside: avoid; } .mut { color: #555; }
+    </style></head><body><h1>Sesión educativa · ${e(C.prof().name)}</h1>
+      <table><tr><th>Fecha</th><td>${e(fmtDate(x.date))}</td></tr><tr><th>Tema</th><td>${e(x.tema)}</td></tr><tr><th>Lugar donde se impartió</th><td>${e(x.lugar || "—")}</td></tr>
+      <tr><th>Dirigida a</th><td>${e(x.pob || "—")}</td></tr><tr><th>N.° de participantes</th><td>${e(x.asist || "—")}</td></tr><tr><th>Código HIS</th><td>${e(x.his || "C0009")} · ${x.his === "C0010" ? "Sesión demostrativa" : "Sesión educativa"}</td></tr></table>
+      <h2 style="font-size:14px">Lista de asistencia</h2>${fotos.map((f, i) => `<img src="${f}" alt="Lista de asistencia ${i + 1}">`).join("") || '<p class="mut">Sin foto de la lista de asistencia.</p>'}
+      <p class="mut">Contiene datos personales de los participantes: no lo comparta fuera del establecimiento.</p></body></html>` };
+  }
+  async function sesView(id) {
+    const x = (Store.meta().sesiones || []).find((s) => s.id === id); if (!x) return;
+    const { fotos } = await sesHtml(x);
+    $("modal-body").innerHTML = `<h2>Sesión educativa del ${esc(fmtDate(x.date))}</h2>
+      <p><b>Tema:</b> ${esc(x.tema)}<br><b>Lugar:</b> ${esc(x.lugar || "—")}<br><b>Dirigida a:</b> ${esc(x.pob || "—")}<br><b>Participantes:</b> ${esc(x.asist || "—")} · <b>HIS:</b> ${esc(x.his || "C0009")}</p>
+      ${fotos.length ? fotos.map((f, i) => `<img class="ses-big" src="${f}" alt="Lista de asistencia, foto ${i + 1}">`).join("") : `<p class="muted">Esta sesión no tiene foto de la lista de asistencia.</p>`}
+      <div class="actions"><button class="btn primary" id="m-print">Imprimir o guardar PDF</button><button class="btn" id="m-edit">Editar</button><button class="btn" id="m-no">Cerrar</button></div>`;
+    $("modal").hidden = false;
+    $("m-no").onclick = closeModal; $("m-no").focus({ preventScroll: true }); $("modal-body").scrollTop = 0;
+    $("m-edit").onclick = () => { closeModal(); sesEdit(id); };
+    $("m-print").onclick = () => sesPrint(id);
+  }
+  async function sesPrint(id) {
+    const x = (Store.meta().sesiones || []).find((s) => s.id === id); if (!x) return;
+    const { html } = await sesHtml(x), name = "Sesion_educativa_" + x.date;
+    const B = window.AndroidBridge;
+    if (B && B.printHtml) { try { B.printHtml(html, name); return; } catch (err) { /* sigue */ } }
+    try {
+      let fr = $("fua-print-frame"); if (fr) fr.remove();
+      fr = document.createElement("iframe"); fr.id = "fua-print-frame"; fr.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0"; document.body.appendChild(fr);
+      fr.contentDocument.open(); fr.contentDocument.write(html); fr.contentDocument.close();
+      setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (err) { download(name + ".html", html, "Sesión educativa"); } }, 400);
+    } catch (err) { download(name + ".html", html, "Sesión educativa"); }
+  }
+
   /* ===== Respaldo diario por correo (solo en el APK) ===== */
   const BR = () => window.AndroidBridge;
   const mailOk = () => { const B = BR(); return !!(B && B.shareBackup && B.setDailyBackup && !B.isWeb); };
@@ -2563,7 +2674,23 @@ const HBFua = (() => {
       <p class="muted">${on ? "Aviso activo todos los días a las " + hhmm(min) + "." : "Aviso desactivado."}${m.last ? " Último envío preparado: " + esc(fmtShort(m.last)) + "." : ""}</p>
     </section>`;
   }
-  function sendBackup() {
+  // Respaldo: pacientes y sesiones, con las fotos de las listas de asistencia de los últimos 6 meses
+  async function backupData() {
+    const exp = Store.exportAll(), lim = C.addMonths(C.today(), -6), fotos = {};
+    for (const x of (exp.meta.sesiones || []).filter((s) => s.date >= lim)) {
+      for (const k of x.fotos || []) { const d = await Store.photoGet("ses_" + x.id, k); if (d) fotos["ses_" + x.id + "|" + k] = d; }
+    }
+    if (Object.keys(fotos).length) exp.sesFotos = fotos;
+    return exp;
+  }
+  async function sesFotosRestore(j) {
+    const F = (j && j.sesFotos) || {};
+    for (const key of Object.keys(F)) {
+      const [pid, k] = key.split("|");
+      if (/^ses_[A-Za-z0-9_-]{1,40}$/.test(pid) && /^[A-Za-z0-9]{1,40}$/.test(k || "") && /^data:image\/jpeg;base64,/.test(String(F[key]))) { try { await Store.photoPut(pid, k, F[key]); } catch (e) { /* sigue */ } }
+    }
+  }
+  async function sendBackup() {
     if (!mailOk()) return;
     const P = C.prof(), t = C.today(), m = Store.meta().dailyMail || {}, list = Store.list().filter((p) => !p.example);
     const hoy = list.reduce((n, p) => n + p.events.filter((e) => e.date === t).length, 0);
@@ -2571,7 +2698,7 @@ const HBFua = (() => {
     try { const pp = currentPeriod(), G = goals(), R = C.monthReport(Store.list(), pp); avance = "\nAvance del periodo (" + fmtShort(pp.from) + " al " + fmtShort(pp.to) + "): " + R.consult.meta + " de " + G.goalC + " " + (P.mainMany || "Consultas médicas").toLowerCase() + "."; } catch (e) { /* sin avance */ }
     const body = "Respaldo de " + P.name + " del " + fmtDate(t) + ".\n\nPacientes registrados: " + list.length + "\nAtenciones registradas hoy: " + hoy + avance
       + "\n\nPara restaurarlo: en la app, Ajustes → Respaldo → «Restaurar respaldo», y elija el archivo adjunto descargado.\n\nContiene datos personales de salud: no lo reenvíe.";
-    BR().shareBackup("respaldo_" + P.id + "_" + t + ".json", JSON.stringify(Store.exportAll()), m.to || "", "Respaldo " + P.name + " · " + fmtDate(t), body);
+    BR().shareBackup("respaldo_" + P.id + "_" + t + ".json", JSON.stringify(await backupData()), m.to || "", "Respaldo " + P.name + " · " + fmtDate(t), body);
     Store.setMeta("lastBackup", t); Store.setMeta("dailyMail", Object.assign({}, m, { last: t }));
   }
   // Se llama al abrir la app desde la notificación (después del PIN)
@@ -3390,8 +3517,8 @@ const HBFua = (() => {
       <div class="tablewrap"><table><tbody>${by(R.visit.by)}
         <tr><td>Entre los días 7 y 15 del inicio del tratamiento o suplementación</td><td class="num">${R.visit.in715}</td></tr>
         <tr><td>Por inasistencia al control</td><td class="num">${R.visit.inasist}</td></tr>
-        <tr><td>Otros motivos</td><td class="num">${R.visit.otro}</td></tr></tbody></table></div>
-      ${sesionesCard(pp)}` : ""}
+        <tr><td>Otros motivos</td><td class="num">${R.visit.otro}</td></tr></tbody></table></div>` : ""}
+      ${sesionesCard(pp)}
       ${P.secondKey === "tele" ? `<h3>${P.goalV ? "Telemonitoreo y teleorientación" : "2. Telemonitoreo de seguimiento"}</h3>
       <div class="tablewrap"><table><tbody>${by(R.tele.by)}
         <tr><td>Entre los días 7 y 15 del inicio del tratamiento</td><td class="num">${R.tele.in715}</td></tr>
@@ -3478,7 +3605,7 @@ const HBFua = (() => {
     if (route === "paciente" && !cur) route = "pacientes";
     applyProfile();
     ["inicio", "pacientes", "reporte", "ajustes"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === route || (t === "pacientes" && route === "paciente"))));
-    $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : viewPaciente();
+    $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : route === "sesiones" ? viewSesiones() : viewPaciente();
     if (route === "paciente" && ptab === "atenciones") updateLab();
     renderStatus(); stale = false; hdrSoon();
     if (!purgePhotos.done && Store.status().tone !== "busy") { purgePhotos.done = true; purgePhotos().catch(() => {}); }
@@ -3703,7 +3830,7 @@ const HBFua = (() => {
         const j = JSON.parse(String(rd.result));
         const data = j && Array.isArray(j.patients) ? j : j && j.patient ? { patients: [Object.assign({}, j.patient, { events: j.followups || j.events || [] })] } : null;
         if (!data) throw new Error("formato");
-        const n = Store.importAll(data); render(false); toast(n + (n === 1 ? " paciente restaurado." : " pacientes restaurados."));
+        const n = Store.importAll(data); sesFotosRestore(j); render(false); toast(n + (n === 1 ? " paciente restaurado." : " pacientes restaurados."));
       } catch (err) { toast("El archivo no es un respaldo de esta app."); }
       e.target.value = "";
     };
@@ -3872,6 +3999,7 @@ const HBFua = (() => {
     const el = e.target, ds = el.dataset, typed = el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "checkbox" && el.type !== "radio");
     if (!typed) return;
     if (ds.ciel) { const [sc, i] = ds.ciel.split(":"), L = cieItems(sc); if (L && L[+i]) { L[+i].lab = el.value.toUpperCase().trim(); if (sc === "his") Store.save(cur); } return; }
+    if (ds.sd) { if (!sesD) sesD = sesBlank(); sesD[ds.sd] = el.value; return; }
     if (ds.cieq) { const r = $("cie-res-" + ds.cieq); if (r) r.innerHTML = cieResHtml(ds.cieq, el.value); return; }
     if (ds.q) { q = el.value; listLimit = 40; $("q-res").innerHTML = resultsHtml(ds.q === "full" ? listLimit : 6, ds.q === "full"); }
     else if (ds.lk) { lk[ds.lk] = el.value; $("lk-res").innerHTML = linkResultsHtml(); }
@@ -3888,6 +4016,8 @@ const HBFua = (() => {
     if (ds.ciel) { if (ds.ciel.startsWith("his:")) render(true); return; }
     if (ds.ciet) { const [sc, i] = ds.ciet.split(":"), L = cieItems(sc); if (L && L[+i]) { L[+i].type = el.value; if (sc === "his") { Store.save(cur); render(true); } } return; }
     if (ds.hisEv) { if (+el.value >= 0) hisLoad(+el.value); render(true); return; }
+    if (ds.sesfoto && el.files && el.files.length) { sesAddFiles(el.files); el.value = ""; return; }
+    if (ds.sd) { if (!sesD) sesD = sesBlank(); sesD[ds.sd] = el.value; return; }
     if (ds.scan && el.files && el.files[0]) { scanDni(ds.scan, el.files[0]); el.value = ""; return; }
     if (ds.fuMed != null && fuaD) { const M = HBFua.MEDS.find((x) => x.code === el.value), m = fuaD.meds[+ds.fuMed]; if (M) { m.code = M.code; m.name = M.name; } else { m.code = ""; m.name = ""; } render(true); return; }
     if (ds.fu && fuaD && choice) { fuaSet(ds.fu, el.type === "checkbox" ? el.checked : el.value); if (ds.fu === "destino" || ds.fu === "prest") render(true); else updateFuaCheck(); return; }
@@ -3984,7 +4114,7 @@ const HBFua = (() => {
     else if (a === "copy-report") copyText(reportTxt(), "Informe copiado.", "Informe del periodo");
     else if (a === "dl-report") download(repFile("txt"), reportTxt(), "Informe del periodo");
     else if (a === "dl-csv") download(repFile("csv"), C.csvMonth(Store.list(), reportPeriod()), "Atenciones del periodo (CSV)");
-    else if (a === "backup") { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(Store.exportAll(), null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }
+    else if (a === "backup") { backupData().then((exp) => { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(exp, null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }); }
     else if (a === "restore") $("imp").click();
     else if (a === "retry") Store.retry();
     else if (a === "his-save") {
@@ -4004,13 +4134,13 @@ const HBFua = (() => {
       const to = $("dm-to").value.trim(); if (to) Store.setMeta("dailyMail", Object.assign({}, Store.meta().dailyMail || {}, { to }));
       sendBackup();
     }
-    else if (a === "ses-add") {
-      const date = $("ses-date").value, tema = $("ses-tema").value.trim();
-      if (!C.parseDate(date) || !tema) { toast("Escriba la fecha y el tema de la sesión."); return; }
-      const L = (Store.meta().sesiones || []).slice(); L.push({ id: Date.now().toString(36), date, tema, pob: $("ses-pob").value, lugar: $("ses-lugar").value.trim(), asist: $("ses-asist").value.trim() });
-      Store.setMeta("sesiones", L); render(true); toast("Sesión educativa registrada.");
-    }
-    else if (a === "ses-del") { Store.setMeta("sesiones", (Store.meta().sesiones || []).filter((x) => x.id !== b.dataset.id)); render(true); }
+    else if (a === "ses-new") sesNew();
+    else if (a === "ses-save") sesSave();
+    else if (a === "ses-cancel") { sesD = sesBlank(); render(false); }
+    else if (a === "ses-edit") sesEdit(b.dataset.id);
+    else if (a === "ses-view") sesView(b.dataset.id);
+    else if (a === "ses-del") { const x = (Store.meta().sesiones || []).find((s) => s.id === b.dataset.id); confirmBox("¿Eliminar la sesión del " + (x ? fmtDate(x.date) : "") + " y sus fotos?", "Eliminar sesión", () => sesDelete(b.dataset.id)); }
+    else if (a === "ses-foto-del") { const d = sesD, i = +b.dataset.i, p = d && d.fotos[i]; if (p) { if (!p.nueva) d.quitar.push(p.k); d.fotos.splice(i, 1); render(true); } }
     else if (a === "fua-open") openFua(+b.dataset.i);
     else if (a === "cie-add") cieAdd(b.dataset.sc, b.dataset.code);
     else if (a === "cie-del") { const L = cieItems(b.dataset.sc); if (L) { L.splice(+b.dataset.i, 1); if (b.dataset.sc === "his") Store.save(cur); render(true); } }

@@ -1787,6 +1787,72 @@ const HBHisCat = (() => {
   }
   return { ALL, find, search, isProc, M };
 })();
+
+/* Registro de actividades del médico (Excel de la DIRIS): mismo formato de la plantilla, generado sin conexión */
+const HBRegXlsx = (() => {
+  "use strict";
+  const T = {"ct": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default ContentType=\"application/xml\" Extension=\"xml\"/><Default ContentType=\"application/vnd.openxmlformats-officedocument.obfuscatedFont\" Extension=\"odttf\"/><Default ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" Extension=\"rels\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\" PartName=\"/xl/worksheets/sheet1.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\" PartName=\"/xl/sharedStrings.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\" PartName=\"/xl/styles.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\" PartName=\"/xl/theme/theme1.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\" PartName=\"/xl/workbook.xml\"/><\/Types>", "rels": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/><\/Relationships>", "wb": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mx=\"http://schemas.microsoft.com/office/mac/excel/2008/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:mv=\"urn:schemas-microsoft-com:mac:vml\" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\" xmlns:x15=\"http://schemas.microsoft.com/office/spreadsheetml/2010/11/main\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xm=\"http://schemas.microsoft.com/office/excel/2006/main\"><workbookPr/><sheets><sheet state=\"visible\" name=\"Hoja 1\" sheetId=\"1\" r:id=\"rId5\"/><\/sheets><definedNames/><calcPr/><\/workbook>", "wbrels": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme\" Target=\"theme/theme1.xml\"/><Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/><Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings\" Target=\"sharedStrings.xml\"/><Relationship Id=\"rId5\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/><\/Relationships>", "styles": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\"><numFmts count=\"2\"><numFmt numFmtId=\"164\" formatCode=\"dd/mm/yyyy\"/><numFmt numFmtId=\"165\" formatCode=\"d/m/yyyy\"/><\/numFmts><fonts count=\"5\"><font><sz val=\"10.0\"/><color rgb=\"FF000000\"/><name val=\"Arial\"/><scheme val=\"minor\"/><\/font><font><color theme=\"1\"/><name val=\"Arial\"/><scheme val=\"minor\"/><\/font><font><b/><sz val=\"8.0\"/><color theme=\"1\"/><name val=\"Arial\"/><\/font><font/><font><color theme=\"1\"/><name val=\"Arial\"/><\/font><\/fonts><fills count=\"3\"><fill><patternFill patternType=\"none\"/><\/fill><fill><patternFill patternType=\"lightGray\"/><\/fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF93C47D\"/><bgColor rgb=\"FF93C47D\"/><\/patternFill><\/fill><\/fills><borders count=\"13\"><border/><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><\/border><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><\/border><border><left style=\"medium\"><color rgb=\"FF000000\"/><\/left><right style=\"medium\"><color rgb=\"FF000000\"/><\/right><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><\/border><border><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><\/border><border><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><top style=\"thin\"><color rgb=\"FF000000\"/><\/top><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><left style=\"thin\"><color rgb=\"FF000000\"/><\/left><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><left style=\"medium\"><color rgb=\"FF000000\"/><\/left><right style=\"medium\"><color rgb=\"FF000000\"/><\/right><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><border><right style=\"thin\"><color rgb=\"FF000000\"/><\/right><bottom style=\"thin\"><color rgb=\"FF000000\"/><\/bottom><\/border><\/borders><cellStyleXfs count=\"1\"><xf borderId=\"0\" fillId=\"0\" fontId=\"0\" numFmtId=\"0\" applyAlignment=\"1\" applyFont=\"1\"/><\/cellStyleXfs><cellXfs count=\"24\"><xf borderId=\"0\" fillId=\"0\" fontId=\"0\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyFont=\"1\"><alignment readingOrder=\"0\" shrinkToFit=\"0\" vertical=\"bottom\" wrapText=\"0\"/><\/xf><xf borderId=\"0\" fillId=\"0\" fontId=\"1\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyFont=\"1\"><alignment horizontal=\"center\"/><\/xf><xf borderId=\"0\" fillId=\"0\" fontId=\"1\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/><\/xf><xf borderId=\"1\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/><\/xf><xf borderId=\"1\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"2\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/><\/xf><xf borderId=\"3\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"1\" fillId=\"2\" fontId=\"2\" numFmtId=\"164\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\" applyNumberFormat=\"1\"><alignment horizontal=\"center\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"4\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" readingOrder=\"0\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"5\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"6\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/><\/xf><xf borderId=\"1\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" readingOrder=\"0\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"2\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"7\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"8\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"9\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"10\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"11\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"12\" fillId=\"0\" fontId=\"3\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"8\" fillId=\"2\" fontId=\"2\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFill=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" readingOrder=\"0\" shrinkToFit=\"0\" vertical=\"center\" wrapText=\"1\"/><\/xf><xf borderId=\"8\" fillId=\"0\" fontId=\"1\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFont=\"1\"><alignment horizontal=\"center\"/><\/xf><xf borderId=\"8\" fillId=\"0\" fontId=\"1\" numFmtId=\"165\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFont=\"1\" applyNumberFormat=\"1\"><alignment horizontal=\"center\" readingOrder=\"0\"/><\/xf><xf borderId=\"8\" fillId=\"0\" fontId=\"1\" numFmtId=\"0\" xfId=\"0\" applyBorder=\"1\" applyFont=\"1\"/><xf borderId=\"8\" fillId=\"0\" fontId=\"4\" numFmtId=\"0\" xfId=\"0\" applyAlignment=\"1\" applyBorder=\"1\" applyFont=\"1\"><alignment horizontal=\"center\" vertical=\"bottom\"/><\/xf><\/cellXfs><cellStyles count=\"1\"><cellStyle xfId=\"0\" name=\"Normal\" builtinId=\"0\"/><\/cellStyles><dxfs count=\"0\"/><\/styleSheet>", "theme": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" name=\"Sheets\"><a:themeElements><a:clrScheme name=\"Sheets\"><a:dk1><a:srgbClr val=\"000000\"/><\/a:dk1><a:lt1><a:srgbClr val=\"FFFFFF\"/><\/a:lt1><a:dk2><a:srgbClr val=\"000000\"/><\/a:dk2><a:lt2><a:srgbClr val=\"FFFFFF\"/><\/a:lt2><a:accent1><a:srgbClr val=\"4285F4\"/><\/a:accent1><a:accent2><a:srgbClr val=\"EA4335\"/><\/a:accent2><a:accent3><a:srgbClr val=\"FBBC04\"/><\/a:accent3><a:accent4><a:srgbClr val=\"34A853\"/><\/a:accent4><a:accent5><a:srgbClr val=\"FF6D01\"/><\/a:accent5><a:accent6><a:srgbClr val=\"46BDC6\"/><\/a:accent6><a:hlink><a:srgbClr val=\"1155CC\"/><\/a:hlink><a:folHlink><a:srgbClr val=\"1155CC\"/><\/a:folHlink><\/a:clrScheme><a:fontScheme name=\"Sheets\"><a:majorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"Arial\"/><a:cs typeface=\"Arial\"/><\/a:majorFont><a:minorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"Arial\"/><a:cs typeface=\"Arial\"/><\/a:minorFont><\/a:fontScheme><a:fmtScheme name=\"Office\"><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/><\/a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"110000\"/><a:satMod val=\"105000\"/><a:tint val=\"67000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\"/><a:satMod val=\"103000\"/><a:tint val=\"73000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\"/><a:satMod val=\"109000\"/><a:tint val=\"81000\"/><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/><\/a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:satMod val=\"103000\"/><a:lumMod val=\"102000\"/><a:tint val=\"94000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:satMod val=\"110000\"/><a:lumMod val=\"100000\"/><a:shade val=\"100000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"99000\"/><a:satMod val=\"120000\"/><a:shade val=\"78000\"/><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/><\/a:gradFill><\/a:fillStyleLst><a:lnStyleLst><a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/><\/a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/><\/a:ln><a:ln w=\"12700\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/><\/a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/><\/a:ln><a:ln w=\"19050\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/><\/a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/><\/a:ln><\/a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/><\/a:effectStyle><a:effectStyle><a:effectLst/><\/a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"57150\" dist=\"19050\" dir=\"5400000\" algn=\"ctr\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"63000\"/><\/a:srgbClr><\/a:outerShdw><\/a:effectLst><\/a:effectStyle><\/a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/><\/a:solidFill><a:solidFill><a:schemeClr val=\"phClr\"><a:tint val=\"95000\"/><a:satMod val=\"170000\"/><\/a:schemeClr><\/a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"93000\"/><a:satMod val=\"150000\"/><a:shade val=\"98000\"/><a:lumMod val=\"102000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:tint val=\"98000\"/><a:satMod val=\"130000\"/><a:shade val=\"90000\"/><a:lumMod val=\"103000\"/><\/a:schemeClr><\/a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"63000\"/><a:satMod val=\"120000\"/><\/a:schemeClr><\/a:gs><\/a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/><\/a:gradFill><\/a:bgFillStyleLst><\/a:fmtScheme><\/a:themeElements><\/a:theme>", "sst": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"29\" uniqueCount=\"29\"><si><t>N°<\/t><\/si><si><t>FECHA\n DIA/MES/AÑO<\/t><\/si><si><t xml:space=\"preserve\">RIS <\/t><\/si><si><t>ESTABLECIMIENTO DE SALUD<\/t><\/si><si><t>N° HISTORIA CLINICA<\/t><\/si><si><t>DNI DEL NIÑO / DNI DE LA GESTANTE<\/t><\/si><si><t>NOMBRE DE PACIENTE<\/t><\/si><si><t>TIPO DE SEGURO<\/t><\/si><si><t>FECHA DE NACIMIENTO<\/t><\/si><si><t>EDAD<\/t><\/si><si><t>GRUPO ETARIO<\/t><\/si><si><t>CELULAR<\/t><\/si><si><t>¿ORDENO DOSAJE DE HEMOGLOBINA? (SI / NO)<\/t><\/si><si><t>¿ORDENO FERRITINA? (SI / NO)<\/t><\/si><si><t>¿FUE REFERIDO?<\/t><\/si><si><t>DIAGNÓSTICO (ANEMIA / PREVENTIVO)<\/t><\/si><si><t>N° MNN<\/t><\/si><si><t>N°SULFATO FERROSO<\/t><\/si><si><t>N°HIERRO POLIMANTOSADO<\/t><\/si><si><t>SEGUIMIENTO<\/t><\/si><si><t>TELEMEDICINA<\/t><\/si><si><t>PERTENECE AL PADRON NOMINAL (SI / NO)<\/t><\/si><si><t xml:space=\"preserve\">OBSERVACION <\/t><\/si><si><t>SIS<\/t><\/si><si><t>OTRO (Essalud, PNP, FAP U otro)<\/t><\/si><si><t>NUMERO DE VISITA DOMICILIARIA<\/t><\/si><si><t>MOTIVO DE VISITA DOMICILIARIA<\/t><\/si><si><t>TELEORIENTACION ADHERENCIA AL HIERRO<\/t><\/si><si><t>TELEMONITOREO<\/t><\/si><\/sst>", "head": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mx=\"http://schemas.microsoft.com/office/mac/excel/2008/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" xmlns:mv=\"urn:schemas-microsoft-com:mac:vml\" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\" xmlns:x15=\"http://schemas.microsoft.com/office/spreadsheetml/2010/11/main\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xm=\"http://schemas.microsoft.com/office/excel/2006/main\"><sheetPr><outlinePr summaryBelow=\"0\" summaryRight=\"0\"/><pageSetUpPr fitToPage=\"1\"/><\/sheetPr><sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"3\" topLeftCell=\"A4\" activePane=\"bottomLeft\" state=\"frozen\"/><\/sheetView><\/sheetViews><sheetFormatPr customHeight=\"1\" defaultColWidth=\"12.63\" defaultRowHeight=\"15.75\"/><cols><col customWidth=\"1\" min=\"1\" max=\"1\" width=\"2\"/><col customWidth=\"1\" min=\"2\" max=\"2\" width=\"4.5\"/><col customWidth=\"1\" min=\"3\" max=\"3\" width=\"11\"/><col customWidth=\"1\" min=\"4\" max=\"4\" width=\"16\"/><col customWidth=\"1\" min=\"5\" max=\"5\" width=\"22\"/><col customWidth=\"1\" min=\"6\" max=\"6\" width=\"11\"/><col customWidth=\"1\" min=\"7\" max=\"7\" width=\"12\"/><col customWidth=\"1\" min=\"8\" max=\"8\" width=\"30\"/><col customWidth=\"1\" min=\"9\" max=\"9\" width=\"6\"/><col customWidth=\"1\" min=\"10\" max=\"10\" width=\"13\"/><col customWidth=\"1\" min=\"11\" max=\"11\" width=\"11\"/><col customWidth=\"1\" min=\"12\" max=\"12\" width=\"25\"/><col customWidth=\"1\" min=\"13\" max=\"13\" width=\"17\"/><col customWidth=\"1\" min=\"14\" max=\"14\" width=\"11\"/><col customWidth=\"1\" min=\"15\" max=\"17\" width=\"12\"/><col customWidth=\"1\" min=\"18\" max=\"18\" width=\"14\"/><col customWidth=\"1\" min=\"19\" max=\"21\" width=\"10\"/><col customWidth=\"1\" min=\"22\" max=\"22\" width=\"10\"/><col customWidth=\"1\" min=\"23\" max=\"23\" width=\"20\"/><col customWidth=\"1\" min=\"24\" max=\"25\" width=\"14\"/><col customWidth=\"1\" min=\"26\" max=\"26\" width=\"12\"/><col customWidth=\"1\" min=\"27\" max=\"27\" width=\"48\"/><\/cols><sheetData><row r=\"1\"><c r=\"B1\" s=\"1\"/><c r=\"C1\" s=\"1\"/><c r=\"K1\" s=\"1\"/><\/row><row r=\"2\" ht=\"42\" customHeight=\"1\"><c r=\"A2\" s=\"2\"/><c r=\"B2\" s=\"3\" t=\"s\"><v>0<\/v><\/c><c r=\"C2\" s=\"4\" t=\"s\"><v>1<\/v><\/c><c r=\"D2\" s=\"4\" t=\"s\"><v>2<\/v><\/c><c r=\"E2\" s=\"4\" t=\"s\"><v>3<\/v><\/c><c r=\"F2\" s=\"4\" t=\"s\"><v>4<\/v><\/c><c r=\"G2\" s=\"4\" t=\"s\"><v>5<\/v><\/c><c r=\"H2\" s=\"4\" t=\"s\"><v>6<\/v><\/c><c r=\"I2\" s=\"5\" t=\"s\"><v>7<\/v><\/c><c r=\"J2\" s=\"6\"/><c r=\"K2\" s=\"7\" t=\"s\"><v>8<\/v><\/c><c r=\"L2\" s=\"8\" t=\"s\"><v>9<\/v><\/c><c r=\"M2\" s=\"9\" t=\"s\"><v>10<\/v><\/c><c r=\"N2\" s=\"10\" t=\"s\"><v>11<\/v><\/c><c r=\"O2\" s=\"11\" t=\"s\"><v>12<\/v><\/c><c r=\"P2\" s=\"11\" t=\"s\"><v>13<\/v><\/c><c r=\"Q2\" s=\"11\" t=\"s\"><v>14<\/v><\/c><c r=\"R2\" s=\"4\" t=\"s\"><v>15<\/v><\/c><c r=\"S2\" s=\"3\" t=\"s\"><v>16<\/v><\/c><c r=\"T2\" s=\"4\" t=\"s\"><v>17<\/v><\/c><c r=\"U2\" s=\"4\" t=\"s\"><v>18<\/v><\/c><c r=\"V2\" s=\"12\" t=\"s\"><v>19<\/v><\/c><c r=\"W2\" s=\"13\"/><c r=\"X2\" s=\"6\"/><c r=\"Y2\" s=\"14\" t=\"s\"><v>20<\/v><\/c><c r=\"Z2\" s=\"4\" t=\"s\"><v>21<\/v><\/c><c r=\"AA2\" s=\"4\" t=\"s\"><v>22<\/v><\/c><c r=\"AB2\" s=\"2\"/><\/row><row r=\"3\" ht=\"42\" customHeight=\"1\"><c r=\"A3\" s=\"2\"/><c r=\"B3\" s=\"15\"/><c r=\"C3\" s=\"15\"/><c r=\"D3\" s=\"15\"/><c r=\"E3\" s=\"15\"/><c r=\"F3\" s=\"15\"/><c r=\"G3\" s=\"15\"/><c r=\"H3\" s=\"15\"/><c r=\"I3\" s=\"14\" t=\"s\"><v>23<\/v><\/c><c r=\"J3\" s=\"14\" t=\"s\"><v>24<\/v><\/c><c r=\"K3\" s=\"15\"/><c r=\"L3\" s=\"16\"/><c r=\"M3\" s=\"17\"/><c r=\"N3\" s=\"18\"/><c r=\"O3\" s=\"15\"/><c r=\"P3\" s=\"15\"/><c r=\"Q3\" s=\"15\"/><c r=\"R3\" s=\"15\"/><c r=\"S3\" s=\"15\"/><c r=\"T3\" s=\"15\"/><c r=\"U3\" s=\"15\"/><c r=\"V3\" s=\"19\" t=\"s\"><v>25<\/v><\/c><c r=\"W3\" s=\"19\" t=\"s\"><v>26<\/v><\/c><c r=\"X3\" s=\"14\" t=\"s\"><v>27<\/v><\/c><c r=\"Y3\" s=\"14\" t=\"s\"><v>28<\/v><\/c><c r=\"Z3\" s=\"15\"/><c r=\"AA3\" s=\"15\"/><c r=\"AB3\" s=\"2\"/><\/row>", "merges": "<mergeCells count=\"22\"><mergeCell ref=\"B2:B3\"/><mergeCell ref=\"C2:C3\"/><mergeCell ref=\"D2:D3\"/><mergeCell ref=\"E2:E3\"/><mergeCell ref=\"F2:F3\"/><mergeCell ref=\"G2:G3\"/><mergeCell ref=\"H2:H3\"/><mergeCell ref=\"Q2:Q3\"/><mergeCell ref=\"R2:R3\"/><mergeCell ref=\"S2:S3\"/><mergeCell ref=\"T2:T3\"/><mergeCell ref=\"U2:U3\"/><mergeCell ref=\"V2:X2\"/><mergeCell ref=\"Z2:Z3\"/><mergeCell ref=\"AA2:AA3\"/><mergeCell ref=\"I2:J2\"/><mergeCell ref=\"K2:K3\"/><mergeCell ref=\"L2:L3\"/><mergeCell ref=\"M2:M3\"/><mergeCell ref=\"N2:N3\"/><mergeCell ref=\"O2:O3\"/><mergeCell ref=\"P2:P3\"/><\/mergeCells>"};
+  const enc = new TextEncoder();
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = (b) => { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  // ZIP sin compresión (método 0): Excel, LibreOffice y Google Sheets lo abren
+  function zip(files) {
+    const parts = [], cen = []; let off = 0;
+    const u16 = (v) => [v & 255, (v >>> 8) & 255], u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+    for (const [name, text] of files) {
+      const nb = enc.encode(name), data = typeof text === "string" ? enc.encode(text) : text, c = crc32(data);
+      const loc = new Uint8Array([].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(c), u32(data.length), u32(data.length), u16(nb.length), u16(0)));
+      parts.push(loc, nb, data);
+      cen.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(c), u32(data.length), u32(data.length), u16(nb.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off))), nb);
+      off += loc.length + nb.length + data.length;
+    }
+    const cenLen = cen.reduce((t, a) => t + a.length, 0), n = files.length;
+    const end = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(n), u16(n), u32(cenLen), u32(off), u16(0)));
+    const all = parts.concat(cen, [end]), out = new Uint8Array(all.reduce((t, a) => t + a.length, 0)); let p = 0;
+    all.forEach((a) => { out.set(a, p); p += a.length; });
+    return out;
+  }
+  const x = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
+  const serial = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ""); return m ? Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(1899, 11, 30)) / 86400000) : null; };
+  const COLS = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA"];
+  const KEYS = ["n", "fecha", "ris", "eess", "hc", "dni", "nombre", "sis", "otro", "nac", "edad", "grupo", "celular", "ordHb", "ordFer", "ref", "dx", "mnn", "sf", "po", "visN", "visMot", "teleOr", "teleMon", "padron", "obs"];
+  // rows: [{ n, fecha:"AAAA-MM-DD", ris, eess, hc, dni, nombre, sis, otro, nac:"AAAA-MM-DD", edad, grupo, celular, ordHb, ordFer, ref, dx, mnn, sf, po, visN, visMot, teleOr, teleMon, padron, obs }]
+  function sheetXml(rows) {
+    const last = Math.max(3 + rows.length, 30);
+    let s = T.head;
+    for (let i = 0; i < last - 3; i++) {
+      const r = 4 + i, d = rows[i] || null;
+      s += `<row r="${r}">`;
+      COLS.forEach((c, k) => {
+        const key = KEYS[k], ref = c + r;
+        if (!d) { s += `<c r="${ref}" s="${k === 0 ? 20 : 22}"/>`; return; }
+        const v = d[key];
+        if (key === "fecha" || key === "nac") { const n = serial(v); s += n == null ? `<c r="${ref}" s="21"/>` : `<c r="${ref}" s="21"><v>${n}<\/v><\/c>`; return; }
+        if (key === "edad") { s += d.nac ? `<c r="${ref}" s="23" t="str"><f>DATEDIF(K${r},C${r},"y")&amp;" años, "&amp;DATEDIF(K${r},C${r},"ym")&amp;" meses y "&amp;DATEDIF(K${r},C${r},"md")&amp;" días"<\/f><v>${x(v)}<\/v><\/c>` : `<c r="${ref}" s="23"/>`; return; }
+        if (key === "n") { s += `<c r="${ref}" s="20"><v>${+v || i + 1}<\/v><\/c>`; return; }
+        s += v === "" || v == null ? `<c r="${ref}" s="22"/>` : `<c r="${ref}" s="22" t="inlineStr"><is><t xml:space="preserve">${x(v)}<\/t><\/is><\/c>`;
+      });
+      s += `<\/row>`;
+    }
+    const L = last;
+    s += `<\/sheetData>${T.merges}<dataValidations count="7">`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="O4:Q${L}"><formula1>"SI,NO"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="R4:R${L}"><formula1>"Anemia Lev,Anemia Mod,Anemia Sev,Preventivo"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="T4:T${L}"><formula1>"SF1,SF2,SF3,SF4,SF5,SF6"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="U4:U${L}"><formula1>"PO1,PO2,PO3,PO4,PO5,PO6"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="Z4:Z${L}"><formula1>"Si,No"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="I4:I${L}"><formula1>"X"<\/formula1><\/dataValidation>`
+      + `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="S4:S${L}"><formula1>"MNN1,MNN2,MNN3,MNN4,MNN5,MNN6,MNN7,MNN8,MNN9,MNN10,MNN11,MNN12"<\/formula1><\/dataValidation>`
+      + `<\/dataValidations><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/><\/worksheet>`;
+    return s;
+  }
+  function build(rows) {
+    return zip([["[Content_Types].xml", T.ct], ["_rels/.rels", T.rels], ["xl/workbook.xml", T.wb], ["xl/_rels/workbook.xml.rels", T.wbrels],
+      ["xl/styles.xml", T.styles], ["xl/theme/theme1.xml", T.theme], ["xl/sharedStrings.xml", T.sst], ["xl/worksheets/sheet1.xml", sheetXml(rows)]]);
+  }
+  function b64(bytes) { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
+  return { build, b64, sheetXml };
+})();
 </script>
 
 <script>
@@ -2057,7 +2123,7 @@ const HBFua = (() => {
   const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1", otros: [], teleLab: "" });
   const blankPatient = () => ({ id: "", ym: "", createdDate: C.today(), updated: 0, name: "", hc: "", dob: "", dni: "", address: "", altitude: "", email: "", phone1: "", phone2: "",
     refName: "", refPhone: "", sex: "F", weight: "", height: "", allergy: "no", allergyText: "", preg: false, puerp: false, fertile: false, preterm: false,
-    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", modalidad: "intramural", hisFor: "", events: [], his: blankHis() });
+    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", modalidad: "intramural", seguro: "SIS", padron: "", hisFor: "", events: [], his: blankHis() });
   // Modalidad de la atención elegida al inicio de la ficha: intramural, extramural, teleconsulta o telemonitoreo
   const MODS = [["intramural", "Consulta intramural"], ["extramural", "Consulta extramural"], ["teleconsulta", "Teleconsulta"], ["telemonitoreo", "Telemonitoreo"]];
   const modType = (m) => (m === "teleconsulta" ? "Teleconsulta" : m === "telemonitoreo" ? "Telemonitoreo" : C.mainType());
@@ -2554,6 +2620,85 @@ const HBFua = (() => {
       <div class="actions"><button class="btn" data-act="ses-new">Registrar sesión educativa</button><button class="btn" data-act="route" data-to="sesiones">Ver todas las sesiones</button></div>`;
   }
 
+  /* ================= Registro de actividades del médico (Excel de la DIRIS) ================= */
+  const regCfg = () => Object.assign({ ris: "", eess: "", mail: true }, Store.meta().regAct || {});
+  let regDate = null;
+  function edadTxt(dob, date) {
+    const a = C.parseDate(dob), b = C.parseDate(date); if (!a || !b || b < a) return "";
+    let y = b.getUTCFullYear() - a.getUTCFullYear(), m = b.getUTCMonth() - a.getUTCMonth(), d = b.getUTCDate() - a.getUTCDate();
+    if (d < 0) { m--; d += new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), 0)).getUTCDate(); }
+    if (m < 0) { y--; m += 12; }
+    return y + " años, " + m + " meses y " + d + " días";
+  }
+  // Producto entregado en la atención: HIS (99199.19 = micronutrientes), luego el FUA guardado o el que se generaría con el plan
+  function prodOf(p, e) {
+    const supp = (e.his && e.his.supp) || (p.hisFor === e.id && p.his ? p.his.supp : "");
+    if (supp === "99199.19") return "MNN";
+    let f = e.fua || null;
+    if (!f) { try { f = HBFua.build(p, e, Store.meta(), fuaCtx(p, e)); } catch (err) { f = null; } }
+    const t = C.norm(((f && f.meds) || []).map((m) => m.name).join(" "));
+    return /micronutri|mmn|mnn/.test(t) ? "MNN" : /polimalt/.test(t) ? "PO" : /sulfato|ferroso/.test(t) ? "SF" : supp === "99199.17" || supp === "99199.26" ? "SF" : "";
+  }
+  // Una fila por atención (la de más datos si hubiera dos el mismo día), en el orden del día
+  function regRows(from, to) {
+    const cfg = regCfg(), rows = [];
+    Store.list().filter((p) => !p.example).forEach((p) => {
+      const evs = C.onePerDay ? C.onePerDay(p.events) : p.events.slice();
+      const all = evs.slice().sort(C.byDate);
+      all.forEach((e, idx) => {
+        if (e.date < from || e.date > to) return;
+        const before = all.slice(0, idx + 1);
+        const nth = (f) => before.filter(f).length;
+        const consult = e.type === C.mainType() || e.type === "Consulta médica" || e.type === "Consulta nutricional";
+        const prod = consult ? prodOf(p, e) : "";
+        const start = C.parseDate(p.start) ? p.start : "";
+        const nProd = prod ? before.filter((x) => x.type === e.type && (!start || x.date >= start) && prodOf(p, x) === prod).length : 0;
+        const sevE = before.slice().reverse().find((x) => x.sev);
+        const dx = p.mode === "preventive" && !(e.sev) ? "Preventivo" : (e.sev || (sevE && sevE.sev)) === "SEV" ? "Anemia Sev" : (e.sev || (sevE && sevE.sev)) === "MOD" ? "Anemia Mod" : (e.sev || (sevE && sevE.sev)) === "LEV" ? "Anemia Lev" : p.mode === "preventive" ? "Preventivo" : "";
+        const seg = (p.seguro || "").trim();
+        const obs = [e.type !== C.mainType() && !["Visita domiciliaria", "Telemonitoreo", "Teleorientación"].includes(e.type) ? e.type + (e.type === "Teleconsulta" ? " n.° " + nth((x) => x.type === "Teleconsulta") : "") : "",
+          e.lugar === "extramural" ? "Extramural" : "", e.hb != null ? "Hb " + C.f1(e.hb) + " g/dL" + (e.hbFecha ? " (" + fmtShort(e.hbFecha) + ")" : "") : "", e.refDest ? "Ref.: " + e.refDest : "", e.notes || ""].filter(Boolean).join(" · ");
+        rows.push({ fecha: e.date, ris: cfg.ris, eess: cfg.eess, hc: p.hc || "", dni: p.dni || "", nombre: (p.name || "").toUpperCase(),
+          sis: seg === "SIS" ? "X" : "", otro: seg && seg !== "SIS" ? seg : "", nac: C.parseDate(p.dob) ? p.dob : "", edad: edadTxt(p.dob, e.date),
+          grupo: (C.GROUPS && C.GROUPS[e.g]) || "", celular: p.phone1 || "", ordHb: e.hb != null || (e.orders || []).includes("hemograma") ? "SI" : "NO",
+          ordFer: (e.orders || []).includes("ferritina") ? "SI" : "NO", ref: e.ref === "Referencia" ? "SI" : "NO", dx,
+          mnn: prod === "MNN" ? "MNN" + nProd : "", sf: prod === "SF" ? "SF" + nProd : "", po: prod === "PO" ? "PO" + nProd : "",
+          visN: e.type === "Visita domiciliaria" ? String(nth((x) => x.type === "Visita domiciliaria")) : "",
+          visMot: e.type === "Visita domiciliaria" ? (e.visitWhy === "inasistencia" ? "Inasistencia al control" : e.visitWhy === "otro" ? "Otro motivo" : "Seguimiento 7 a 15 días") : "",
+          teleOr: e.type === "Teleorientación" ? String(nth((x) => x.type === "Teleorientación")) : "",
+          teleMon: e.type === "Telemonitoreo" ? String(nth((x) => x.type === "Telemonitoreo")) : "",
+          padron: p.padron || "", obs, _t: e.saved || "" });
+      });
+    });
+    rows.sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.nombre < b.nombre ? -1 : 1));
+    rows.forEach((r, i) => { r.n = i + 1; });
+    return rows;
+  }
+  const regName = (from, to) => "Registro_actividades_" + C.prof().id + "_" + (from === to ? from : from + "_al_" + to) + ".xlsx";
+  function regBytes(from, to) { return HBRegXlsx.build(regRows(from, to)); }
+  function regDownload(from, to) {
+    const rows = regRows(from, to);
+    if (!rows.length) { toast("No hay atenciones registradas " + (from === to ? "el " + fmtDate(from) : "en ese periodo") + "."); return; }
+    const bytes = HBRegXlsx.build(rows), name = regName(from, to), B = window.AndroidBridge;
+    if (B && B.saveFileB64 && !B.isWeb) { B.saveFileB64(name, HBRegXlsx.b64(bytes)); return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    toast("Excel descargado: " + rows.length + (rows.length === 1 ? " atención." : " atenciones."));
+  }
+  function regCard(pp) {
+    const c = regCfg(), d = regDate || C.today(), nDay = regRows(d, d).length, nPer = regRows(pp.from, pp.to).length;
+    const faltan = Store.list().filter((p) => !p.example && p.events.some((e) => e.date >= pp.from && e.date <= pp.to) && (!p.seguro || (minorP(p) && !p.padron))).length;
+    return `<h3>Registro de actividades del médico (Excel)</h3>
+      <p class="muted">Se llena solo con las atenciones registradas, en el formato de la DIRIS: una fila por atención.${mailOk() ? " También se adjunta al correo diario de las " + hhmm((mailState().minutos != null ? mailState().minutos : 1200)) + "." : ""}</p>
+      <div class="grid">
+        <label class="field" for="rg-ris"><span>RIS</span><input id="rg-ris" data-rg="ris" value="${esc(c.ris)}" placeholder="Ej.: RIS Lima Centro 1" autocomplete="off"></label>
+        <label class="field" for="rg-eess"><span>Establecimiento de salud</span><input id="rg-eess" data-rg="eess" value="${esc(c.eess)}" placeholder="Ej.: C.S. San Sebastián" autocomplete="off"></label>
+        <label class="field" for="rg-date"><span>Día</span><input type="date" id="rg-date" data-rgdate="1" value="${esc(d)}" max="${C.today()}"></label>
+      </div>
+      ${faltan ? `<div class="note warn">${faltan} ${faltan === 1 ? "paciente atendido no tiene" : "pacientes atendidos no tienen"} el tipo de seguro o el padrón nominal en su ficha: esas columnas saldrán vacías.</div>` : ""}
+      <div class="actions"><button class="btn primary" data-act="rg-day">Descargar Excel del ${d === C.today() ? "día de hoy" : fmtShort(d)} (${nDay})</button><button class="btn" data-act="rg-per">Descargar Excel del periodo (${nPer})</button></div>`;
+  }
+
   /* ================= Sesiones educativas: fecha, tema, lugar y foto de la lista de asistencia ================= */
   let sesD = null;            // borrador: { id?, date, tema, lugar, pob, asist, his, fotos: [{ k, data, nueva }], quitar: [k] }
   const SES_POB = [["Madres y cuidadores de menores de 36 meses y gestantes", "Madres y cuidadores de menores de 36 meses y gestantes"], ["Madres y cuidadores de menores de 36 meses", "Madres y cuidadores de menores de 36 meses"], ["Gestantes", "Gestantes"], ["Adolescentes", "Adolescentes"], ["Población general", "Población general"]];
@@ -2673,6 +2818,7 @@ const HBFua = (() => {
     return `<section class="card"><h2>Respaldo diario por correo</h2>
       <p class="muted">Cada día, a la hora elegida, el teléfono le avisa con una notificación. Al tocarla e ingresar su PIN se abre el correo con el respaldo completo de sus pacientes adjunto: solo toque Enviar.</p>
       <label class="check"><input type="checkbox" id="dm-on" ${on ? "checked" : ""}> Recordarme enviar el respaldo todos los días</label>
+      ${BR().shareFiles ? `<label class="check"><input type="checkbox" data-rgmail="1" ${regCfg().mail !== false ? "checked" : ""}> Adjuntar el registro de actividades del médico (Excel) del día</label>` : ""}
       <div class="grid">
         <label class="field" for="dm-to"><span>Enviar a</span><input type="email" id="dm-to" inputmode="email" autocomplete="email" placeholder="su correo institucional" value="${esc(m.to || "")}"></label>
         <label class="field" for="dm-time"><span>Hora del aviso</span><input type="time" id="dm-time" value="${hhmm(min)}"></label>
@@ -2707,7 +2853,12 @@ const HBFua = (() => {
     try { const pp = currentPeriod(), G = goals(), R = C.monthReport(Store.list(), pp); avance = "\nAvance del periodo (" + fmtShort(pp.from) + " al " + fmtShort(pp.to) + "): " + R.consult.meta + " de " + G.goalC + " " + (P.mainMany || "Consultas médicas").toLowerCase() + "."; } catch (e) { /* sin avance */ }
     const body = "Respaldo de " + P.name + " del " + fmtDate(t) + ".\n\nPacientes registrados: " + list.length + "\nAtenciones registradas hoy: " + hoy + avance
       + "\n\nPara restaurarlo: en la app, Ajustes → Respaldo → «Restaurar respaldo», y elija el archivo adjunto descargado.\n\nContiene datos personales de salud: no lo reenvíe.";
-    BR().shareBackup("respaldo_" + P.id + "_" + t + ".json", JSON.stringify(await backupData()), m.to || "", "Respaldo " + P.name + " · " + fmtDate(t), body);
+    const B = BR(), json = JSON.stringify(await backupData()), rows = regRows(t, t), cfg = regCfg();
+    if (B.shareFiles && cfg.mail !== false) {
+      const files = [{ name: regName(t, t), b64: HBRegXlsx.b64(HBRegXlsx.build(rows)) }, { name: "respaldo_" + P.id + "_" + t + ".json", text: json }];
+      B.shareFiles(JSON.stringify(files), m.to || "", "Registro de actividades y respaldo " + P.name + " · " + fmtDate(t),
+        body.replace("Atenciones registradas hoy: " + hoy, "Atenciones registradas hoy: " + hoy + "\nAdjunto: registro de actividades del médico (Excel) del día, " + rows.length + (rows.length === 1 ? " fila." : " filas.")));
+    } else B.shareBackup("respaldo_" + P.id + "_" + t + ".json", json, m.to || "", "Respaldo " + P.name + " · " + fmtDate(t), body);
     Store.setMeta("lastBackup", t); Store.setMeta("dailyMail", Object.assign({}, m, { last: t }));
   }
   // Se llama al abrir la app desde la notificación (después del PIN)
@@ -2810,6 +2961,8 @@ const HBFua = (() => {
         ${inp("name", "Nombre completo", 'autocomplete="off"')}
         ${inp("dni", "DNI", 'inputmode="numeric" maxlength="8" autocomplete="off"')}
         ${inp("hc", "N.° de historia clínica", 'autocomplete="off"')}
+        <label class="field" for="f-seguro"><span>Tipo de seguro</span>${sel("f-seguro", 'data-k="seguro"', p.seguro || "", [["", "Sin dato"], ["SIS", "SIS"], ["EsSalud", "EsSalud"], ["PNP", "PNP"], ["FAP", "FAP"], ["Otro", "Otro"], ["Sin seguro", "Sin seguro"]])}</label>
+        ${minorP(p) || !C.parseDate(p.dob) ? `<label class="field" for="f-padron"><span>¿Pertenece al padrón nominal?</span>${sel("f-padron", 'data-k="padron"', p.padron || "", [["", "Sin dato"], ["Si", "Sí"], ["No", "No"]])}</label>` : ""}
         ${inp("dob", "Fecha de nacimiento", `type="date" max="${C.today()}"`)}
         <div class="field"><span>Edad</span><output id="o-age">${esc(C.ageLabel(D.age))}</output></div>
         <label class="field" for="f-sex"><span>Sexo biológico</span>${sel("f-sex", 'data-k="sex"', p.sex, [["F", "Femenino"], ["M", "Masculino"]])}</label>
@@ -3579,6 +3732,7 @@ const HBFua = (() => {
         <tr><td>Por inasistencia al control</td><td class="num">${R.visit.inasist}</td></tr>
         <tr><td>Otros motivos</td><td class="num">${R.visit.otro}</td></tr></tbody></table></div>` : ""}
       ${sesionesCard(pp)}
+      ${regCard(pp)}
       ${P.secondKey === "tele" ? `<h3>${P.goalV ? "Telemonitoreo y teleorientación" : "2. Telemonitoreo de seguimiento"}</h3>
       <div class="tablewrap"><table><tbody>${by(R.tele.by)}
         <tr><td>Entre los días 7 y 15 del inicio del tratamiento</td><td class="num">${R.tele.in715}</td></tr>
@@ -4101,6 +4255,7 @@ const HBFua = (() => {
     if (!typed) return;
     if (ds.ciel) { const [sc, i] = ds.ciel.split(":"), L = cieItems(sc); if (L && L[+i]) { L[+i].lab = el.value.toUpperCase().trim(); if (sc === "his") Store.save(cur); } return; }
     if (ds.sd) { if (!sesD) sesD = sesBlank(); sesD[ds.sd] = el.value; return; }
+    if (ds.rg) { Store.setMeta("regAct", Object.assign(regCfg(), { [ds.rg]: el.value.trim() })); return; }
     if (ds.cieq) { const r = $("cie-res-" + ds.cieq); if (r) r.innerHTML = cieResHtml(ds.cieq, el.value); return; }
     if (ds.q) { q = el.value; listLimit = 40; $("q-res").innerHTML = resultsHtml(ds.q === "full" ? listLimit : 6, ds.q === "full"); }
     else if (ds.lk) { lk[ds.lk] = el.value; $("lk-res").innerHTML = linkResultsHtml(); }
@@ -4117,6 +4272,9 @@ const HBFua = (() => {
     if (ds.ciel) { if (ds.ciel.startsWith("his:")) render(true); return; }
     if (ds.ciet) { const [sc, i] = ds.ciet.split(":"), L = cieItems(sc); if (L && L[+i]) { L[+i].type = el.value; if (sc === "his") { Store.save(cur); render(true); } } return; }
     if (ds.hisEv) { if (+el.value >= 0) hisLoad(+el.value); render(true); return; }
+    if (ds.rgmail) { Store.setMeta("regAct", Object.assign(regCfg(), { mail: el.checked })); return; }
+    if (ds.rgdate) { regDate = C.parseDate(el.value) ? el.value : null; render(true); return; }
+    if (ds.rg) { Store.setMeta("regAct", Object.assign(regCfg(), { [ds.rg]: el.value.trim() })); render(true); return; }
     if (ds.sesfoto && el.files && el.files.length) { sesAddFiles(el.files); el.value = ""; return; }
     if (ds.sd) { if (!sesD) sesD = sesBlank(); sesD[ds.sd] = el.value; return; }
     if (ds.scan && el.files && el.files[0]) { scanDni(ds.scan, el.files[0]); el.value = ""; return; }
@@ -4236,6 +4394,8 @@ const HBFua = (() => {
       const to = $("dm-to").value.trim(); if (to) Store.setMeta("dailyMail", Object.assign({}, Store.meta().dailyMail || {}, { to }));
       sendBackup();
     }
+    else if (a === "rg-day") { const d = regDate || C.today(); regDownload(d, d); }
+    else if (a === "rg-per") { const pp = currentPeriod(); regDownload(pp.from, pp.to); }
     else if (a === "ses-new") sesNew();
     else if (a === "ses-save") sesSave();
     else if (a === "ses-cancel") { sesD = sesBlank(); render(false); }

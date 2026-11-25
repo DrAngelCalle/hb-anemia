@@ -553,6 +553,11 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 .ses-big { display: block; width: 100%; height: auto; margin: 8px 0; border: 1px solid var(--line, #d6dbe1); border-radius: 8px; }
 #modal-body .ses-big + .ses-big { margin-top: 4px; }
 
+/* Modalidad de la atención (inicio de la ficha) */
+.modcard .seg.mods { display: grid; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+@media (min-width: 761px) { .modcard .seg.mods { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.modcard .seg.mods label { justify-content: center; text-align: center; min-height: 48px; }
+
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
@@ -913,7 +918,7 @@ const Clin = (() => {
     acts: [["99209", "Atención en nutrición / consulta nutricional"], ["99403", "Consejería nutricional (nutricionista)"],
       ["99403.01", "Consejería nutricional en alimentación saludable"], ["99401", "Consejería integral"],
       ["99209.04", "Evaluación nutricional antropométrica"], ["C0011", "Visita familiar integral"],
-      ["99499.08", "Teleorientación sincrónica"], ["99499.10", "Telemonitoreo"],
+      ["99499.01", "Teleconsulta en línea"], ["99499.08", "Teleorientación sincrónica"], ["99499.10", "Telemonitoreo"],
       ["99499.11", "Teleinterconsulta sincrónica"], ["C0010", "Sesión demostrativa"]]
   };
   function hisDefaults(g, cls, pl) {
@@ -927,7 +932,7 @@ const Clin = (() => {
     if (h.hbMethod) rows.push({ text: HIS.hb[h.hbMethod], type: "D", lab: "", code: h.hbMethod });
     (h.labs || []).forEach((k) => { const l = LABS.find((x) => x[0] === k); if (l && l[2]) rows.push({ text: l[1], type: "D", lab: "", code: l[2] }); });
     if (h.supp) rows.push({ text: HIS.supp[h.supp], type: "D", lab: h.suppLab || "", code: h.supp });
-    HIS.acts.forEach(([code, text]) => { if (h.acts && (Array.isArray(h.acts) ? h.acts.includes(code) : h.acts[code])) rows.push({ text, type: "D", lab: code === "99499.11" ? (h.tiLab || "1") : "", code }); });
+    HIS.acts.forEach(([code, text]) => { if (h.acts && (Array.isArray(h.acts) ? h.acts.includes(code) : h.acts[code])) rows.push({ text, type: "D", lab: code === "99499.11" ? (h.tiLab || "1") : ["99499.01", "99499.08", "99499.10"].includes(code) ? (h.teleLab || "") : "", code }); });
     return rows;
   }
 
@@ -1090,16 +1095,16 @@ const Clin = (() => {
     limacentro: { id: "limacentro", name: "HB Lima Centro", org: "DIRIS Lima Centro", appCode: "HBLC",
       sub: "DIRIS Lima Centro · Anemia en menores de 36 meses (énfasis en menores de 12 meses) y gestantes",
       target: ["rnbp", "lt6", "m6_11", "m12_23", "m24_35", "gest"], targetText: "niñas y niños menores de 36 meses y gestantes", kidsShort: "< 36 meses",
-      goalC: 300, goalS: 93, goalV: 25, goalE: 3, second: "Telemonitoreo", secondTypes: ["Telemonitoreo", "Teleorientación"], secondKey: "tele",
-      secondLabel: "Telemonitoreos y teleorientaciones", secondOne: "telemonitoreo o teleorientación", secondMany: "telemonitoreos",
+      goalC: 300, goalS: 93, goalV: 25, goalE: 3, second: "Telemonitoreo", secondTypes: ["Telemonitoreo", "Teleconsulta", "Teleorientación"], secondKey: "tele",
+      secondLabel: "Telemonitoreos, teleconsultas y teleorientaciones", secondOne: "telemonitoreo, teleconsulta o teleorientación", secondMany: "telemonitoreos y teleconsultas",
       buckets: [["m0", "Niñas y niños menores de 12 meses"], ["m1", "Niñas y niños de 12 a 35 meses"], ["gest", "Gestantes"], ["fuera", "Fuera de la población objetivo"]],
       bucketOf: (g) => (g === "gest" ? "gest" : g === "rnbp" || g === "lt6" || g === "m6_11" ? "m0" : g === "m12_23" || g === "m24_35" ? "m1" : "fuera") }
     ,nutricion: { id: "nutricion", name: "HB Nutrición", org: "DIRIS Lima Centro", appCode: "HBNU", fuaKind: "nutricion", nutricion: true,
       sub: "DIRIS Lima Centro · Atención nutricional de menores de 36 meses (prioridad menores de 12 meses) y gestantes con suplementación preventiva o tratamiento de anemia",
       target: ["rnbp", "lt6", "m6_11", "m12_23", "m24_35", "gest"], targetText: "niñas y niños menores de 36 meses y gestantes", kidsShort: "< 36 meses",
       mainType: "Consulta nutricional", mainOne: "consulta nutricional", mainMany: "Consultas nutricionales",
-      goalC: 127, goalS: 100, goalV: 25, goalE: 3, second: "Telemonitoreo", secondTypes: ["Telemonitoreo", "Teleorientación"], secondKey: "tele",
-      secondLabel: "Telemonitoreos y teleorientaciones", secondOne: "telemonitoreo o teleorientación", secondMany: "telemonitoreos",
+      goalC: 127, goalS: 100, goalV: 25, goalE: 3, second: "Telemonitoreo", secondTypes: ["Telemonitoreo", "Teleconsulta", "Teleorientación"], secondKey: "tele",
+      secondLabel: "Telemonitoreos, teleconsultas y teleorientaciones", secondOne: "telemonitoreo, teleconsulta o teleorientación", secondMany: "telemonitoreos y teleconsultas",
       buckets: [["m0", "Niñas y niños menores de 12 meses"], ["m1", "Niñas y niños de 12 a 35 meses"], ["gest", "Gestantes"], ["fuera", "Fuera de la población objetivo"]],
       bucketOf: (g) => (g === "gest" ? "gest" : g === "rnbp" || g === "lt6" || g === "m6_11" ? "m0" : g === "m12_23" || g === "m24_35" ? "m1" : "fuera") }
   };
@@ -1115,7 +1120,7 @@ const Clin = (() => {
   const mainType = () => PROF.mainType || "Consulta médica";
   const secondTypes = () => PROF.secondTypes || [PROF.second];
   const isSecond = (t) => secondTypes().includes(t);
-  const teleTypes = () => (PROF.id === "limacentro" || PROF.id === "nutricion" ? ["Telemonitoreo", "Teleorientación"] : ["Telemonitoreo"]);
+  const teleTypes = () => (PROF.id === "limacentro" || PROF.id === "nutricion" ? ["Telemonitoreo", "Teleconsulta", "Teleorientación"] : ["Telemonitoreo", "Teleconsulta"]);
   const isTarget = (g) => TARGET.includes(g);
   const bucketOf = (g) => PROF.bucketOf(g);
   const popOf = (g) => (g === "gest" ? "gest" : isTarget(g) ? "ninos" : "otros");
@@ -2053,11 +2058,19 @@ const HBFua = (() => {
   // Fuera de Claude (APK o página independiente) no hay cuenta: todo queda en el dispositivo
   const STANDALONE = document.documentElement.dataset.standalone === "1" || !!window.AndroidBridge;
 
-  const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1", otros: [] });
+  const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1", otros: [], teleLab: "" });
   const blankPatient = () => ({ id: "", ym: "", createdDate: C.today(), updated: 0, name: "", hc: "", dob: "", dni: "", address: "", altitude: "", email: "", phone1: "", phone2: "",
     refName: "", refPhone: "", sex: "F", weight: "", height: "", allergy: "no", allergyText: "", preg: false, puerp: false, fertile: false, preterm: false,
-    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", hisFor: "", events: [], his: blankHis() });
-  const blankDraft = () => ({ i: null, date: C.today(), type: C.mainType(), hemDias: "", consejHem: false, hb: "", weight: "", height: "", adherence: "", dx: "auto", orders: [], res: {}, resEval: false,
+    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", modalidad: "intramural", hisFor: "", events: [], his: blankHis() });
+  // Modalidad de la atención elegida al inicio de la ficha: intramural, extramural, teleconsulta o telemonitoreo
+  const MODS = [["intramural", "Consulta intramural"], ["extramural", "Consulta extramural"], ["teleconsulta", "Teleconsulta"], ["telemonitoreo", "Telemonitoreo"]];
+  const modType = (m) => (m === "teleconsulta" ? "Teleconsulta" : m === "telemonitoreo" ? "Telemonitoreo" : C.mainType());
+  const modLugar = (m) => (m === "extramural" ? "extramural" : "intramural");
+  const modOf = (e) => (e.type === "Teleconsulta" ? "teleconsulta" : e.type === "Telemonitoreo" ? "telemonitoreo" : e.lugar === "extramural" ? "extramural" : "intramural");
+  const ACT_OF = { "Telemonitoreo": "99499.10", "Teleconsulta": "99499.01", "Teleorientación": "99499.08", "Visita domiciliaria": "C0011", "Atención en nutrición": "99209", "Consejería nutricional": "99403" };
+  // Lab del HIS en telemedicina: número de control (1, 2, 3…) del mismo tipo de atención
+  const teleLabOf = (p, ev) => (["Telemonitoreo", "Teleconsulta", "Teleorientación"].includes(ev.type) ? String(p.events.filter((e) => e.type === ev.type && (e.date < ev.date || e === ev || e.id === ev.id)).length || 1) : "");
+  const blankDraft = () => ({ i: null, date: C.today(), type: modType(typeof cur !== "undefined" && cur ? cur.modalidad : ""), lugar: modLugar(typeof cur !== "undefined" && cur ? cur.modalidad : ""), hemDias: "", consejHem: false, hb: "", weight: "", height: "", adherence: "", dx: "auto", orders: [], res: {}, resEval: false,
     adverse: [], ram: false, ramNote: "", ref: "", refDest: "", refReason: "", notes: "",
     comorb: [], comorbTx: "", tol: "", medidas: [], medidasTxt: "", coord: [], consej: false, regHC: false, regHIS: false, nutri: "", dxOtros: [] });
   const blankNote = () => ({ date: C.today(), area: "Diagnóstico", kind: "Hallazgo", text: "" });
@@ -2792,6 +2805,9 @@ const HBFua = (() => {
     const p = D.p, woman = p.sex === "F" && (!D.age || D.age.years >= 10), infant = D.age && D.age.months < 6;
     return `
     ${p.example ? `<div class="note">Esta ficha muestra <b>datos de ejemplo</b> y no se guarda. Use «Nuevo paciente» para registrar los suyos.</div>` : ""}
+    ${p.example ? "" : `<section class="card modcard"><h2>Modalidad de la atención</h2>
+      <div class="seg mods" role="radiogroup" aria-label="Modalidad de la atención">${MODS.map(([v, t]) => `<label for="f-mod-${v}"><input type="radio" id="f-mod-${v}" name="modalidad" data-k="modalidad" value="${v}" ${(p.modalidad || "intramural") === v ? "checked" : ""}>${t}</label>`).join("")}</div>
+      <p class="muted">${modNote(p)}</p></section>`}
     ${idCard(D)}
     <section class="card"><h2>Datos del paciente</h2>
       <div class="grid">
@@ -2952,8 +2968,8 @@ const HBFua = (() => {
   };
   const advSet = (D) => (D.age && D.age.months < 36 ? ADV_CHILD : ADV_ADULT);
   const KIND = { visita: "Visita", hb: "Hb", fin: "Cierre" };
-  const TYPES_MED = ["Consulta médica", "Visita domiciliaria", "Telemonitoreo", "Teleorientación", "Atención en nutrición", "Consejería nutricional", "Control de hemoglobina"];
-  const TYPES_NU = ["Consulta nutricional", "Visita domiciliaria", "Telemonitoreo", "Teleorientación", "Control de hemoglobina"];
+  const TYPES_MED = ["Consulta médica", "Visita domiciliaria", "Telemonitoreo", "Teleconsulta", "Teleorientación", "Atención en nutrición", "Consejería nutricional", "Control de hemoglobina"];
+  const TYPES_NU = ["Consulta nutricional", "Visita domiciliaria", "Telemonitoreo", "Teleconsulta", "Teleorientación", "Control de hemoglobina"];
   const typesOf = () => (C.prof().nutricion ? TYPES_NU : TYPES_MED);
   const arrChecks = (key, items, sel0) => `<div class="checks">${items.map(([v, t], n) => `<label class="check" for="a-${key}-${n}"><input type="checkbox" id="a-${key}-${n}" data-arr="${key}" data-v="${esc(v)}" ${sel0.includes(v) ? "checked" : ""}>${esc(t)}</label>`).join("")}</div>`;
   const DXNAME = { D649: "D649 · Anemia de tipo no especificado", D509: "D509 · Anemia por deficiencia de hierro", O990: "O990 · Anemia que complica el embarazo, parto o puerperio" };
@@ -3289,7 +3305,7 @@ const HBFua = (() => {
     const dx = h.dx === "auto" ? def.dx : h.dx, labs = dx ? C.HIS.dxLabs[dx] : [""];
     let dxLab = h.dxLab === "auto" ? (dx === "D509" || dx === "O990" ? (D.cls.his || labs[0]) : "") : h.dxLab;
     if (!labs.includes(dxLab)) dxLab = labs[0];
-    return { dx, dxLab, dxLabs: labs, dxType: h.dxType, hbMethod: h.hbMethod, supp: h.supp === "auto" ? def.supp : h.supp, suppLab: h.suppLab, acts: h.acts, labs: h.labs, tiLab: h.tiLab, otros: h.otros || [], def };
+    return { dx, dxLab, dxLabs: labs, dxType: h.dxType, hbMethod: h.hbMethod, supp: h.supp === "auto" ? def.supp : h.supp, suppLab: h.suppLab, acts: h.acts, labs: h.labs, tiLab: h.tiLab, otros: h.otros || [], teleLab: h.teleLab || "", def };
   }
   function hisHb(D) { return D.last && D.last.hb != null ? D.last.hb : D.obs; }
   function hisText(D) {
@@ -3334,6 +3350,7 @@ const HBFua = (() => {
       <div class="checks">${C.LABS.filter((l) => l[2]).map(([k, name, code]) => `<label class="check" for="h-lab-${k}"><input type="checkbox" id="h-lab-${k}" data-hlab="${k}" ${h.labs.includes(k) ? "checked" : ""}><span><span class="code">${code}</span> ${esc(name)}</span></label>`).join("")}</div>
       <h3>Otras actividades</h3>
       <div class="checks">${C.HIS.acts.map(([code, text], i) => `<label class="check" for="h-act-${i}"><input type="checkbox" id="h-act-${i}" data-hact="${code}" ${h.acts.includes(code) ? "checked" : ""}><span><span class="code">${code}</span> ${esc(text)}</span></label>`).join("")}</div>
+      ${h.acts.some((c) => ["99499.01", "99499.08", "99499.10"].includes(c)) ? `<div class="grid"><label class="field" for="h-teleLab"><span>Lab de telemedicina (número de control)</span>${sel("h-teleLab", 'data-h="teleLab"', h.teleLab || "", [["", "Vacío"]].concat(Array.from({ length: 20 }, (_, i) => [String(i + 1), String(i + 1)])))}</label></div>` : ""}
       ${h.acts.includes("99499.11") ? `<div class="grid"><label class="field" for="h-tiLab"><span>Lab de la teleinterconsulta</span>${sel("h-tiLab", 'data-h="tiLab"', h.tiLab, [["1", "1 · Teleinterconsultante"], ["2", "2 · Teleinterconsultora"]])}</label></div>` : ""}
     </section>
     <section class="card"><h2>Resumen para transcribir</h2>
@@ -3383,6 +3400,53 @@ const HBFua = (() => {
   }
   async function scanDni(kind, file) {
     try { ocrPhoto(kind, await shrink(file, 1600, 0.85)); } catch (e) { toast("No se pudo abrir la foto del DNI. Intente de nuevo."); }
+  }
+  // Una vez por app: las atenciones ya registradas cuyo HIS, notas o FUA indican telemonitoreo, teleconsulta, teleorientación
+  // o consulta extramural pasan a ese tipo o lugar (así suman donde corresponde en las metas y el HIS queda completo)
+  const ACT_TXT = { "99499.10": "Telemonitoreo", "99499.01": "Teleconsulta en línea", "99499.08": "Teleorientación sincrónica" };
+  function migrateMod() {
+    if (Store.meta().modMig1) return 0;
+    let n = 0;
+    for (const p of Store.list()) {
+      if (p.example) continue;
+      let ch = false;
+      p.events.forEach((e) => {
+        if (e.type !== C.mainType()) return;                         // solo consultas: las visitas y demás se respetan
+        const codes = [].concat(((e.his && e.his.rows) || []).map((r) => r.code), (e.dxOtros || []).map((o) => o.code),
+          p.hisFor === e.id ? (p.his.acts || []).concat((p.his.otros || []).map((o) => o.code)) : []);
+        const txt = C.norm([e.notes, e.comorbTx, e.refReason].filter(Boolean).join(" "));
+        const to = codes.includes("99499.10") || /telemonitoreo/.test(txt) ? "Telemonitoreo"
+          : codes.some((c) => c === "99499.01" || c === "99499.03") || /teleconsulta/.test(txt) ? "Teleconsulta"
+          : codes.some((c) => c === "99499.08" || c === "99499.09") || /teleorientacion/.test(txt) ? "Teleorientación" : "";
+        if (to) {
+          e.type = to; e.lugar = ""; ch = true; n++;
+          const tc = (o) => !(o && /^99499\.(01|03|08|09|10)$/.test(o.code));   // el código pasa a la actividad de la atención: sin duplicar
+          e.dxOtros = (e.dxOtros || []).filter(tc);
+          if (e.his) { e.his.otros = (e.his.otros || []).filter(tc); e.his.rows = (e.his.rows || []).filter((r, i, a) => a.findIndex((x) => x.code === r.code) === i); }
+          if (p.hisFor === e.id) p.his.otros = (p.his.otros || []).filter(tc);
+        }
+        else if (e.lugar !== "extramural" && (/extramural/.test(txt) || (e.fua && e.fua.lugar === "extramural"))) { e.lugar = "extramural"; ch = true; n++; }
+      });
+      if (!ch) continue;
+      // HIS de cada atención de telemedicina: código y Lab con el número de control
+      p.events.forEach((e) => {
+        const code = ACT_OF[e.type]; if (!code || !code.startsWith("99499")) return;
+        const lab = teleLabOf(p, e);
+        if (e.his) {
+          e.his.rows = e.his.rows || []; e.his.acts = e.his.acts || [];
+          const r = e.his.rows.find((x) => x.code === code);
+          if (r) r.lab = r.lab || lab; else e.his.rows.push({ text: ACT_TXT[code] || e.type, type: "D", lab, code });
+          if (!e.his.acts.includes(code)) e.his.acts.push(code);
+          e.his.teleLab = e.his.teleLab || lab;
+        }
+        if (p.hisFor === e.id) { if (!p.his.acts.includes(code)) p.his.acts.push(code); p.his.teleLab = p.his.teleLab || lab; }
+      });
+      const last = p.events.slice().sort(C.byDate).filter((e) => e.type === C.mainType() || e.type === "Teleconsulta" || e.type === "Telemonitoreo").pop();
+      if (last) p.modalidad = modOf(last);
+      Store.save(p);
+    }
+    Store.setMeta("modMig1", C.today());
+    return n;
   }
   // Borra las fotos que guardaron versiones anteriores (rostro y DNI): ya no se conservan
   async function purgePhotos() {
@@ -3609,6 +3673,11 @@ const HBFua = (() => {
     if (route === "paciente" && ptab === "atenciones") updateLab();
     renderStatus(); stale = false; hdrSoon();
     if (!purgePhotos.done && Store.status().tone !== "busy") { purgePhotos.done = true; purgePhotos().catch(() => {}); }
+    if (!migrateMod.done && Store.status().tone !== "busy" && !Store.st.loading && Store.st.mode !== "pending") {
+      migrateMod.done = true;
+      const n = migrateMod();
+      if (n) setTimeout(() => { render(false); toast(n + (n === 1 ? " atención ya registrada pasó" : " atenciones ya registradas pasaron") + " a telemonitoreo, teleconsulta, teleorientación o extramural según su HIS."); }, 50);
+    }
     if (act) { const el = $(act); if (el) el.focus({ preventScroll: true }); }
   }
   // Franja superior: día del periodo y avance de la actividad principal
@@ -3659,13 +3728,30 @@ const HBFua = (() => {
 
   const minorP = (p) => { const a = C.parseDate(p.dob) ? C.ageAt(p.dob, C.today()) : null; return !!(a && a.years < 18); };
   const famName = (p) => p.acompNombre || (p.acompParentesco === "Madre" ? p.madreNombre : "") || "";
-  const refOf = (p) => [famName(p) + (p.acompParentesco ? " (" + p.acompParentesco.toLowerCase() + ")" : ""), p.phone1].filter((x) => x && x.trim()).join(" · ");
+  const refOf = (p) => [famName(p) ? famName(p) + (p.acompParentesco ? " (" + p.acompParentesco.toLowerCase() + ")" : "") : "", p.phone1].filter((x) => x && x.trim()).join(" · ");
   // Menor de 18 años: el contacto de referencia es el mismo familiar que acude (sus teléfonos)
   function syncMinorRef(p) {
     if (!minorP(p)) return;
     const n = famName(p);
     p.refName = n ? n + (p.acompParentesco ? " (" + p.acompParentesco.toLowerCase() + ")" : "") : "";
     p.refPhone = p.phone1 || p.phone2 || "";
+  }
+  function modNote(p) {
+    const m = p.modalidad || "intramural", code = ACT_OF[modType(m)];
+    const today = p.events.find((e) => e.date === C.today());
+    return "La atención de hoy se registra como <b>" + esc(modType(m)) + (m === "intramural" || m === "extramural" ? " " + m : "") + "</b>" + (code ? " y pasa al HIS con <b>" + code + "</b> (Lab: número de control)" : " y pasa al HIS") + "." + (today ? "" : " Se aplica al guardar la Hb o la atención de hoy.");
+  }
+  // Cambiar la modalidad corrige la atención de hoy (tipo, lugar y HIS) y el borrador de la nueva atención
+  function applyMod() {
+    const p = cur; if (!p || p.example) return;
+    const m = p.modalidad || "intramural";
+    if (draft && draft.i == null) { draft.type = modType(m); draft.lugar = modLugar(m); }
+    const i = p.events.findIndex((e) => e.date === C.today());
+    if (i < 0 || modOf(p.events[i]) === m || !(p.events[i].type === C.mainType() || ["Teleconsulta", "Telemonitoreo"].includes(p.events[i].type))) { render(true); return; }
+    const keep = draft, keepTab = ptab, d = draftFromEvent(i);
+    d.type = modType(m); d.lugar = modLugar(m); draft = d; saveEvent();
+    draft = keep && keep.i == null ? keep : blankDraft(); ptab = keepTab; fuaD = null; render(false);
+    toast("Atención de hoy registrada como " + modType(m) + (m === "extramural" ? " extramural" : "") + "; HIS actualizado.");
   }
   function setP(k, v) {
     const p = cur; p[k] = v;
@@ -3726,9 +3812,10 @@ const HBFua = (() => {
     ev.dxOtros = (d.dxOtros || []).filter((o) => o && o.code).map((o) => ({ code: o.code, desc: o.desc, type: HBHisCat.isProc(o.code) ? "D" : o.type || "D", lab: String(o.lab || "").trim() }));
     if (d.i != null && p.events[d.i].fua) ev.fua = fuaRefresh(clone(p.events[d.i].fua), ev);
     if (d.i != null) p.events[d.i] = ev; else p.events.push(ev);
-    const act = { "Telemonitoreo": "99499.10", "Teleorientación": "99499.08", "Visita domiciliaria": "C0011", "Atención en nutrición": "99209", "Consejería nutricional": "99403" }[d.type];
+    if (date === t && (ev.type === C.mainType() || ev.type === "Teleconsulta" || ev.type === "Telemonitoreo")) p.modalidad = modOf(ev);
+    const act = ACT_OF[d.type];
     p.his = Object.assign(blankHis(), { dx: dx || "", dxType: others.some((e) => e.dx === dx && e.date <= date) ? "R" : "D", dxLab: dx === "D649" ? "" : cls.his && (dx === "D509" || dx === "O990") ? cls.his : "auto",
-      hbMethod: hb != null ? "85018.01" : "", labs: d.orders.filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab, otros: clone(ev.dxOtros) });
+      hbMethod: hb != null ? "85018.01" : "", labs: d.orders.filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab, otros: clone(ev.dxOtros), teleLab: teleLabOf(p, ev), tiLab: p.his.tiLab });
     p.hisFor = ev.id; ev.his = hisSnapshot(p);
     draft = blankDraft(); dOpen = {}; fuaD = null; Store.save(p); render(false);
     toast(p.example ? "Atención agregada al ejemplo (no se guarda)." : "Atención guardada.");
@@ -3752,9 +3839,9 @@ const HBFua = (() => {
     const p = cur, ev = p.events[i]; if (!ev) return;
     if (ev.his) { const h = clone(ev.his); delete h.rows; delete h.saved; p.his = Object.assign(blankHis(), h); }
     else {
-      const act = { "Telemonitoreo": "99499.10", "Teleorientación": "99499.08", "Visita domiciliaria": "C0011", "Atención en nutrición": "99209", "Consejería nutricional": "99403" }[ev.type];
+      const act = ACT_OF[ev.type];
       p.his = Object.assign(blankHis(), { dx: ev.dx || "", dxType: p.events.some((e) => e !== ev && e.dx && e.dx === ev.dx && e.date < ev.date) ? "R" : "D", dxLab: "auto",
-        hbMethod: ev.hb != null ? "85018.01" : "", labs: (ev.orders || []).filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab, otros: clone(ev.dxOtros || []) });
+        hbMethod: ev.hb != null ? "85018.01" : "", labs: (ev.orders || []).filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab, otros: clone(ev.dxOtros || []), teleLab: teleLabOf(p, ev) });
     }
     p.hisFor = ev.id; Store.save(p);
   }
@@ -4026,6 +4113,7 @@ const HBFua = (() => {
       if (ds.k === "hb" || ds.k === "hbDate") { setP(ds.k, el.value); setTimeout(() => syncFicha("hb"), 0); }
       if (ds.k === "weight" || ds.k === "height") { setP(ds.k, el.value); setTimeout(() => syncFicha("wh"), 0); }
       if (ds.k === "dob" && C.num(cur.hb) != null) setTimeout(() => syncFicha("hb"), 0);
+      if (ds.k === "modalidad") { setP("modalidad", el.value); applyMod(); return; }
       if (choice) { setP(ds.k, el.type === "checkbox" ? el.checked : el.value); render(true); }
       else if (ds.k === "dob" || ds.k === "weeks") render(true);
     } else if (ds.e) {

@@ -558,6 +558,161 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 @media (min-width: 761px) { .modcard .seg.mods { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .modcard .seg.mods label { justify-content: center; text-align: center; min-height: 48px; }
 
+/* Equivalencias: diferencias visibles */
+tr.eqwarn td { background: color-mix(in srgb, #b54708 9%, transparent); }
+tr.eqnote td { font-size: .9em; padding-top: 2px; }
+.eqlist { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.eqlist li { border: 1px solid var(--line, #d6dbe1); border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; align-items: baseline; }
+.eqlist .eq-name { flex: 1 1 200px; min-width: 0; }
+.eqlist .eq-name small { display: block; }
+.eqlist .eq-qty { white-space: nowrap; }
+.eqlist .eq-diff { color: var(--muted, #5b6672); margin-left: 4px; }
+.eqlist .eq-note { flex-basis: 100%; margin: 4px 0 0; font-size: .92em; }
+.eqlist li.eq-warn { background: color-mix(in srgb, #b54708 8%, transparent); border-color: color-mix(in srgb, #b54708 35%, transparent); }
+
+/* ================= HB — rediseño v2.17: paleta cómoda, encabezado compacto, 5 destinos ================= */
+/* Solo presentación. Sin fuentes descargadas: letra del sistema (Roboto en Android). */
+:root {
+  --bg: #f2f5f4; --surface: #ffffff; --ink: #24323b; --muted: #5b6a72; --line: #dde4e2; --field: #f7f9f8;
+  --font-display: system-ui, -apple-system, Roboto, "Segoe UI", Aptos, Arial, sans-serif;
+  --font-body: system-ui, -apple-system, Roboto, "Segoe UI", Aptos, Arial, sans-serif;
+  --r-card: 14px; --r-ctl: 10px; --nav-h: 64px;
+}
+/* Color de cada app, con menos saturación: se distinguen sin cansar la vista */
+:root, :root[data-app="limanorte"] { --accent: #22707a; --accent-ink: #ffffff; --accent-soft: #e4f0f1; --series: #3d8c96; }
+:root[data-app="limacentro"] { --accent: #87405f; --accent-ink: #ffffff; --accent-soft: #f5e8ee; --series: #a65c7c; }
+:root[data-app="nutricion"] { --accent: #2e7453; --accent-ink: #ffffff; --accent-soft: #e3f0e8; --series: #4a9070; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #121a1d; --surface: #1a2529; --ink: #e3ebee; --muted: #9aacb2; --line: #2b3a40; --field: #152024; }
+  :root:not([data-theme="light"])[data-app="limanorte"] { --accent: #6cc2ca; --accent-ink: #082a2e; --accent-soft: #183a3f; --series: #4fa9b2; }
+  :root:not([data-theme="light"])[data-app="limacentro"] { --accent: #e3a2bf; --accent-ink: #2a0d1a; --accent-soft: #3a2230; --series: #c9809f; }
+  :root:not([data-theme="light"])[data-app="nutricion"] { --accent: #8dd1ab; --accent-ink: #0c2a18; --accent-soft: #1a3527; --series: #63b088; }
+}
+body { font: 400 15px/1.5 var(--font-body); background: var(--bg); color: var(--ink); }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
+h2 { font-size: 17px; font-weight: 650; }
+main { gap: 12px; }
+
+/* ---------- Encabezado compacto: superficie clara, sin franja de color ---------- */
+header.top { margin: -16px -16px 0; padding: 10px 16px 10px; background: var(--surface); color: var(--ink); border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+header.top .brand { flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+header.top h1 { font-size: 18px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+header.top h1::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); flex: none; }
+header.top #app-sub { color: var(--muted); font-size: 12.5px; }
+header.top .status { background: var(--bg); color: var(--muted); border: 1px solid var(--line); font-size: 12px; min-height: 30px; padding: 0 10px; max-width: none; white-space: nowrap; overflow: visible; }
+header.top .status button { color: var(--accent); min-height: 44px; min-width: 44px; padding: 0 4px; margin: -7px 0; }
+.hdrprog { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.hdrprog #hdr-txt { grid-column: 1 / -1; grid-row: 1; }
+.hdrprog b { font-size: 14px; color: var(--ink); }
+.hdrprog .hbar { order: 0; grid-column: 1; grid-row: 2; height: 4px; border-radius: 2px; background: var(--accent-soft); }
+.hdrprog .hbar i { background: var(--accent); }
+.hdrprog .pace { order: 0; grid-column: 2; grid-row: 2; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+@media (max-width: 480px) { header.top #app-sub { display: none; } }   /* la red se ve en Informe y en Ajustes */
+@media (min-width: 761px) { header.top { margin: 0; border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px 18px; } }
+
+/* ---------- Navegación: 5 destinos abajo en el teléfono, barra superior en pantallas amplias ---------- */
+nav.tabs.main .ico { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+nav.tabs.main button { display: flex; align-items: center; justify-content: center; gap: 8px; }
+nav.tabs.main .navcta .ico { color: var(--accent); }
+@media (max-width: 760px) {
+  nav.tabs.main { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 2px; padding: 4px 4px calc(6px + env(safe-area-inset-bottom, 0px)); padding-bottom: max(8px, calc(6px + env(safe-area-inset-bottom, 0px)));
+    background: var(--surface); border-top: 1px solid var(--line); }
+  nav.tabs.main .only-wide { display: none; }
+  nav.tabs.main button { flex-direction: column; gap: 2px; min-height: 56px; padding: 6px 2px; font-size: 11.5px !important; font-weight: 600; color: var(--muted); background: none; border: 0; border-radius: 12px; }
+  nav.tabs.main button span { line-height: 1.2; }
+  nav.tabs.main button[aria-selected="true"] { color: var(--accent); background: none; }
+  nav.tabs.main button[aria-selected="true"] .ico { background: var(--accent-soft); border-radius: 999px; padding: 1px 12px; width: 46px; box-sizing: content-box; height: 22px; margin: 0 -12px; }
+  nav.tabs.main .navcta { color: var(--ink); }
+  main { padding-bottom: calc(var(--nav-h) + 28px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px)); }
+  /* Teclado abierto: la barra se oculta para no tapar el campo que se escribe */
+  html.kb nav.tabs.main { display: none; }
+  html.kb main { padding-bottom: 24px; }
+}
+@media (min-width: 761px) {
+  nav.tabs.main { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 6px; padding: 6px 0; background: var(--bg); }
+  nav.tabs.main button { min-height: 46px; border-radius: var(--r-ctl); border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; }
+  nav.tabs.main button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  nav.tabs.main button[aria-selected="true"] .ico { color: var(--accent-ink); }
+}
+
+/* ---------- Componentes ---------- */
+.card { border-radius: var(--r-card); border: 1px solid var(--line); padding: 16px; gap: 12px; box-shadow: none; }
+.btn { border-radius: var(--r-ctl); min-height: 44px; border-color: var(--line); }
+.btn.primary { box-shadow: none; }
+.field > span { font-size: 12.5px; color: var(--muted); }
+.field input, .field select, .field textarea, .searchrow input { background: var(--field); border-color: var(--line); border-radius: var(--r-ctl); }
+.field input:focus, .field select:focus, .field textarea:focus, .searchrow input:focus { border-color: var(--accent); background: var(--surface); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.field output { border-style: dashed; color: var(--ink); background: transparent; }
+.check, .seg label { background: var(--field); }
+.note { border-radius: 12px; }
+details { border-radius: 12px; }
+.tabs.sub button { background: var(--surface); }
+.tabs.sub button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pill { font-size: 13.5px; }
+footer { padding: 4px 2px 8px; font-size: 12px; }
+
+/* ---------- Cabecera del paciente: una sola identidad ---------- */
+.summary { border-radius: var(--r-card); border-left-width: 5px; }
+.idstrip { margin: 0; padding: 8px 12px; grid-template-columns: minmax(0, 1fr) auto !important; }
+.idstrip .idtxt b { display: none; }   /* el nombre ya está en el resumen */
+.idstrip .idtxt span:first-of-type { font-size: 13px; }
+/* Pestañas del paciente fijas arriba al desplazarse */
+nav.tabs.sub { position: sticky; top: 0; z-index: 6; background: var(--bg); padding: 6px 0; margin: 0 -2px; }
+
+/* ---------- Secciones plegables e índice ---------- */
+.sec > h2[data-sec], .sec > h3[data-sec] { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; margin: -8px 0; -webkit-tap-highlight-color: transparent; }
+.sec > [data-sec]::after { content: ""; flex: none; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform 160ms var(--ease-out, ease); }
+.sec.sec-off > [data-sec]::after { transform: rotate(-45deg); }
+.sec.sec-off > :not(:first-child) { display: none !important; }
+.sec.sec-off { padding-top: 12px; padding-bottom: 12px; }
+.sec, .rep > h3 { scroll-margin-top: 64px; }
+.secidx { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 4px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; -webkit-overflow-scrolling: touch; }
+.secidx::-webkit-scrollbar { display: none; }
+.secidx button { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 13px var(--font-body); white-space: nowrap; cursor: pointer; }
+.secidx button:active { background: var(--accent-soft); }
+@media (min-width: 761px) { .secidx { flex-wrap: wrap; margin: 0; padding: 0; overflow: visible; } }
+
+/* ---------- Diálogos: panel inferior en el teléfono ---------- */
+@media (max-width: 760px) {
+  .modal { align-items: flex-end; padding: 0; }
+  .modal > div { max-width: none; border-radius: 18px 18px 0 0; max-height: 88vh; padding: 18px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .modal:not([hidden]) > div { animation: hb-sheet 240ms var(--ease-out, ease); }
+}
+@keyframes hb-sheet { from { transform: translateY(24px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .modal:not([hidden]) > div { animation: hb-fade 160ms ease-out !important; } }
+.sheet { display: flex; flex-direction: column; gap: 4px; }
+.sheet h2 { margin-bottom: 6px; }
+.sheet-item { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 10px 8px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); text-align: left; cursor: pointer; border-radius: 0; }
+.sheet-item:last-of-type { border-bottom: 0; }
+.sheet-item .ico { width: 24px; height: 24px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.sheet-item b { display: block; font-size: 15px; }
+.sheet-item small { display: block; color: var(--muted); font-size: 12.5px; }
+.sheet-item:active, .sheet-item:focus-visible { background: var(--accent-soft); }
+.sheet .actions { margin-top: 8px; }
+.sheet .actions .btn { flex: 1; }
+
+/* ---------- Tablas legibles en el teléfono, sin desplazamiento lateral ---------- */
+@media (max-width: 480px) {
+  table { font-size: 13.5px; }
+  th, td { padding: 7px 6px; }
+}
+
+/* ---------- Zonas táctiles de 44 × 44 px como mínimo (Android) ---------- */
+.secidx button { min-height: 44px; }
+label.check { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+.btn, .btn.small, button.btn { min-width: 44px; min-height: 44px; }
+/* Enlaces dentro del texto: la zona táctil crece a 44 px sin mover las líneas */
+.linkbtn { display: inline-block; min-width: 44px; padding: 12px 0; margin: -12px 0; line-height: 20px; vertical-align: baseline; }
+.rowlist li .linkbtn, .tile .linkbtn { position: relative; }
+/* Pestañas del paciente: las 5 siempre visibles; cada una mide 44 px de ancho o más */
+nav.tabs.sub { display: grid; grid-template-columns: repeat(5, auto); gap: 4px; }
+nav.tabs.sub button { min-width: 44px; padding-left: 4px; padding-right: 4px; font-size: 13px; white-space: nowrap; }
+@media (max-width: 359px) { nav.tabs.sub button { font-size: 11.5px; } }
+/* Con «Reintentar» el estado baja a su propia línea en pantallas angostas, para no apretar el nombre */
+@media (max-width: 430px) { header.top:has(.status button) .status { grid-column: 1 / -1; justify-self: start; } }
+
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
 </head>
@@ -571,10 +726,12 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
   </header>
 
   <nav class="tabs main" role="tablist" aria-label="Secciones" id="tabs">
-    <button role="tab" id="tab-inicio" data-act="route" data-to="inicio">Inicio</button>
-    <button role="tab" id="tab-pacientes" data-act="route" data-to="pacientes">Pacientes</button>
-    <button role="tab" id="tab-reporte" data-act="route" data-to="reporte">Informe</button>
-    <button role="tab" id="tab-ajustes" data-act="route" data-to="ajustes">Ajustes</button>
+    <button role="tab" id="tab-inicio" data-act="route" data-to="inicio"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4z"/></svg><span>Inicio</span></button>
+    <button role="tab" id="tab-pacientes" data-act="route" data-to="pacientes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.5" r="2.5"/><path d="M15.6 14.3c2.4-.2 4.4 1.4 4.9 4.2"/></svg><span>Pacientes</span></button>
+    <button id="tab-registrar" class="navcta" data-act="registrar" aria-label="Registrar atención"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg><span>Registrar</span></button>
+    <button role="tab" id="tab-reporte" data-act="route" data-to="reporte"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 20V10M10 20V5M15 20v-7M20 20v-4"/></svg><span>Informe</span></button>
+    <button role="tab" id="tab-ajustes" class="only-wide" data-act="route" data-to="ajustes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/></svg><span>Ajustes</span></button>
+    <button role="tab" id="tab-mas" data-act="mas" aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></svg><span>Más</span></button>
   </nav>
 
   <div id="view"></div>
@@ -604,10 +761,17 @@ const Clin = (() => {
   const pad = (n) => String(n).padStart(2, "0");
   const iso = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   const today = () => iso(new Date()); // fecha local, no UTC
-  const parseDate = (s) => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const d = new Date(s + "T12:00:00"); return isNaN(+d) ? null : d; };
-  const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return iso(d); };
+  // Solo fechas reales: la ida y vuelta rechaza 2026-02-31, 2025-02-29 o 2026-04-31 (F-08)
+  const parseDate = (s) => {
+    if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    const y = +s.slice(0, 4); if (y < 1900 || y > 2100) return null;
+    const d = new Date(s + "T12:00:00");
+    return isNaN(+d) || iso(d) !== s ? null : d;
+  };
+  const addDays = (s, n) => { const d = parseDate(s); if (!d) return null; d.setDate(d.getDate() + n); return iso(d); };
   const addMonths = (s, n) => {
-    const d = parseDate(s), day = d.getDate();
+    const d = parseDate(s); if (!d) return null;
+    const day = d.getDate();
     d.setDate(1); d.setMonth(d.getMonth() + n);
     const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     d.setDate(Math.min(day, last));
@@ -631,16 +795,19 @@ const Clin = (() => {
     return a.years >= 12 || mm === 0 ? yy : yy + " " + mm + (mm === 1 ? " mes" : " meses");
   }
 
-  function altAdjust(msnm) {
-    if (msnm == null) return { adj: null, msg: "Ingrese la altitud (0 si reside a nivel del mar)." };
+  // Acepta número o texto numérico; vacío, texto, NaN, negativo o > 5500 → sin ajuste y mensaje, nunca excepción (F-07)
+  function altAdjust(raw) {
+    if (raw == null || raw === "") return { adj: null, msg: "Ingrese la altitud (0 si reside a nivel del mar)." };
+    const msnm = num(raw);
+    if (msnm == null) return { adj: null, msg: "La altitud debe ser un número en metros sobre el nivel del mar." };
     if (msnm < 0) return { adj: null, msg: "La altitud no puede ser negativa." };
     if (msnm > 5500) return { adj: null, msg: "La Tabla 1 llega hasta 5500 msnm: verifique el ajuste manualmente." };
     const v = Math.floor(msnm), row = ALT.find(([a, b]) => v >= a && v <= b);
-    return { adj: row[2], msg: "" };
+    return row ? { adj: row[2], msg: "" } : { adj: null, msg: "Altitud fuera de la Tabla 1: verifique el dato." };
   }
   function hbAdjusted(obs, msnm) {
-    const a = altAdjust(msnm).adj;
-    return obs == null || a == null ? null : r1(obs - a);
+    const a = altAdjust(msnm).adj, o = num(obs);
+    return o == null || a == null ? null : r1(o - a);
   }
 
   const GROUPS = {
@@ -663,7 +830,8 @@ const Clin = (() => {
     if (m < 60) return "m36_59";
     if (y < 12) return "a5_11";
     if (y < 18) return F ? "adolF" : "adolM";
-    return F ? (p.fertile ? "mef" : "mujer") : "varon";
+    // F-10: «mujer en edad fértil» solo cuenta entre 18 y 49 años (de 12 a 17 se usa el grupo adolescente)
+    return F ? (p.fertile && y <= 49 ? "mef" : "mujer") : "varon";
   }
   function groupLabel(g, p) {
     if (!g) return "—";
@@ -720,19 +888,38 @@ const Clin = (() => {
     sfJarabe: { name: "Sulfato ferroso, jarabe", per: 3, unit: "mL", step: 0.5 },
     pmJarabe: { name: "Complejo polimaltosado férrico, jarabe", per: 10, unit: "mL", step: 0.5 },
     sfTab: { name: "Sulfato ferroso, tableta de 60 mg", per: 60, unit: "tabletas", step: 1 },
-    sfafTab: { name: "Sulfato ferroso + ácido fólico, tableta de 60 mg + 400 µg", per: 60, unit: "tabletas", step: 1 }
+    sfafTab: { name: "Sulfato ferroso + ácido fólico, tableta de 60 mg + 400 µg", per: 60, unit: "tabletas", step: 1 },
+    pmTab: { name: "Complejo polimaltosado férrico, tableta de 100 mg", per: 100, unit: "tabletas", step: 1 }   // NTS 213 Tabla 3 (F-06)
   };
+  const EQ_WARN_PCT = 10;   // diferencia que exige verificación profesional (criterio aprobado en la auditoría)
+  // Equivalencias (F-05): la dosis prescrita en mg no se toca; se calcula aparte la cantidad administrable.
+  // Sin mínimo forzado, nunca por encima del máximo, en el punto medio se elige la cantidad menor,
+  // y toda diferencia queda visible con su porcentaje y una advertencia cuando corresponde.
   function equivalents(mg, keys, max) {
-    if (mg == null) return [];
-    return keys.map((k) => {
-      const f = FORMS[k];
-      let u = Math.round(mg / f.per / f.step) * f.step;
-      if (max != null && u * f.per > max + 1e-9) u = Math.floor(max / f.per / f.step) * f.step;
-      if (u <= 0) u = f.step;
-      if (f.unit === "tabletas" && Math.abs(u * f.per - mg) > 1e-9) return null; // solo tabletas enteras exactas
-      return { name: f.name, qty: u, unit: f.unit === "tabletas" && u === 1 ? "tableta" : f.unit, mg: r1(u * f.per), per: f.per };
-    }).filter(Boolean);
+    if (mg == null || !(mg > 0)) return [];
+    return (keys || []).filter((k) => FORMS[k]).map((k) => {
+      const f = FORMS[k], base = { key: k, name: f.name, per: f.per, unit: f.unit, step: f.step, conc: f.per + " mg de hierro elemental por " + (f.unit === "gotas" ? "gota" : f.unit === "mL" ? "mL" : "tableta"), mgRx: r1(mg), max: max == null ? null : max };
+      const units = mg / f.per / f.step, lo = Math.floor(units + 1e-9), hi = Math.ceil(units - 1e-9);
+      let n = units - lo > hi - units ? hi : lo;                      // en el punto medio exacto: la menor
+      if (max != null && n * f.step * f.per > max + 1e-9) n = Math.floor(max / f.per / f.step + 1e-9);
+      const qty = r1(n * f.step);
+      if (f.unit === "tabletas" && Math.abs(qty * f.per - mg) > 1e-9) {
+        return Object.assign(base, { qty: null, mg: null, diffPct: null, exact: false, tone: "warn",
+          warn: "No hay una cantidad exacta en tabletas de " + f.per + " mg para " + f1(mg) + " mg: use otra presentación o verifique la indicación." });
+      }
+      if (n <= 0) {
+        return Object.assign(base, { qty: null, mg: null, diffPct: null, exact: false, tone: "warn",
+          warn: "La dosis calculada (" + f1(mg) + " mg) es menor que la unidad mínima de esta presentación (" + f1(f.per * f.step) + " mg): verifique con criterio profesional." });
+      }
+      const got = Math.round(qty * f.per * 100) / 100, diff = got - mg, pct = r1(diff / mg * 100), unit = f.unit === "tabletas" && qty === 1 ? "tableta" : f.unit === "gotas" && qty === 1 ? "gota" : f.unit;
+      const warn = Math.abs(pct) > EQ_WARN_PCT ? "La cantidad administrable da " + f1(got) + " mg, " + Math.abs(pct) + "\u00a0% " + (diff > 0 ? "más" : "menos") + " que la dosis calculada: verifique con criterio profesional o use otra presentación."
+        : diff > 1e-9 ? "Supera la dosis calculada en " + (Math.round(diff * 100) / 100) + " mg (" + pct + "\u00a0%), sin pasar el máximo." : "";
+      return Object.assign(base, { qty, unit, mg: got, diffPct: pct, exact: Math.abs(diff) < 1e-9, tone: Math.abs(pct) > EQ_WARN_PCT ? "warn" : diff > 1e-9 ? "info" : "ok", warn });
+    });
   }
+  // Presentaciones precisas para sugerir sin intervención (FUA): existe cantidad y la diferencia no pasa del umbral
+  const precise = (e) => e && e.qty != null && e.tone !== "warn";
+
 
   function plan(g, age, p, cls, mode) {
     const w = num(p.weight), W = w != null && w > 0 && w < 300 ? w : null;
@@ -754,7 +941,7 @@ const Clin = (() => {
       if (g === "lt6" || g === "m6_11" || g === "m12_23" || g === "m24_35" || g === "m36_59" || g === "a5_11") {
         const max = g === "lt6" ? 40 : g === "m36_59" ? 90 : g === "a5_11" ? 120 : 70;
         const d = perKg(3, max);
-        const forms = g === "lt6" ? ["sfGotas", "pmGotas"] : g === "m36_59" ? ["sfJarabe", "pmJarabe"] : g === "a5_11" ? ["sfJarabe", "pmJarabe", "sfTab"] : ["sfGotas", "pmGotas", "sfJarabe", "pmJarabe"];
+        const forms = g === "lt6" ? ["sfGotas", "pmGotas"] : g === "m36_59" ? ["sfJarabe", "pmJarabe"] : g === "a5_11" ? ["sfJarabe", "pmJarabe", "sfTab", "pmTab"] : ["sfGotas", "pmGotas", "sfJarabe", "pmJarabe"];
         o = out({ tone: "ok", title: mgTitle(d, 3, max), calc: d.calc, mg: d.mg, max, forms, supp: "99199.17",
           lines: ["Diario, durante 6 meses continuos. Dosis máxima para la edad: " + max + " mg/día.",
             g === "lt6" ? "Esquema para nacidos/as a término y con buen peso al nacer." : "",
@@ -768,7 +955,7 @@ const Clin = (() => {
         o = out({ tone: "ok", title: "120 mg de hierro elemental + 800 µg de ácido fólico al día", mg: 120, folic: 800, forms: ["sfafTab"], supp: "99199.26",
           lines: ["2 tabletas de sulfato ferroso + ácido fólico al día; el tratamiento completo dura 6 meses.",
             "Control de Hb cada 4 semanas hasta alcanzar el valor normal. Si al primer mes no aumenta 1 g/dL: interconsulta médica.",
-            "Con Hb en valor normal (11 g/dL o más): continuar 120 mg + 800 µg por 3 meses; desde el quinto mes, 60 mg + 400 µg hasta completar los 6 meses."] });
+            "Con Hb ≥ 11 g/dL (valor normal): continuar 120 mg + 800 µg por 3 meses; desde el quinto mes, 60 mg + 400 µg hasta completar los 6 meses."] });
       } else if (g === "mujer") {
         return out({ tone: "warn", title: "Sin esquema definido para este grupo", lines: ["La Tabla 18 cubre a adolescentes y mujeres en edad fértil. Si corresponde, marque «Mujer en edad fértil» en la Ficha; de lo contrario, evaluación médica."] });
       } else {
@@ -812,13 +999,22 @@ const Clin = (() => {
       case "gest": {
         const wk = num(p.weeks), early = wk != null ? wk < 14 : p.trimester === "1", late = wk != null ? wk > 32 : p.trimester === "3";
         if (early) return out({ title: "Inicia a partir de la semana 14 de gestación", folic: 400, supp: "99199.26", lines: ["60 mg de hierro elemental + 400 µg de ácido fólico al día, previo descarte de anemia, hasta 30 días después del parto."] });
+        // F-01: inicio de la atención prenatal después de la semana 32 → 120 mg + 800 µg (NTS 213, 6.1.1 B.7, Tabla 11)
+        if (late && p.apnTardia) return out({ tone: "ok", title: "120 mg de hierro elemental + 800 µg de ácido fólico al día", mg: 120, folic: 800, forms: ["sfafTab"], supp: "99199.26",
+          lines: ["2 tabletas diarias: inició la atención prenatal después de la semana 32.", "Continúa hasta 30 días después del parto.",
+            "Si presenta efectos adversos: bajar la dosis y subir gradualmente en 4 a 5 días.", "Al menos una atención nutricional por trimestre."] });
         return out({ tone: "ok", title: "60 mg de hierro elemental + 400 µg de ácido fólico al día", mg: 60, folic: 400, forms: ["sfafTab"], supp: "99199.26",
-          refer: late ? "Si recién inicia la atención prenatal después de la semana 32: 120 mg de hierro elemental + 800 µg de ácido fólico al día (2 tabletas) hasta 30 días después del parto." : "",
+          refer: late ? "Si inició la atención prenatal después de la semana 32, marque esa condición en la ficha: la dosis pasa a 120 mg de hierro elemental + 800 µg de ácido fólico al día (2 tabletas)." : "",
           lines: ["1 tableta diaria hasta el término de la gestación; continúa hasta 30 días después del parto.",
             "Si presenta efectos adversos: bajar a 30 mg/día y subir gradualmente en 4 a 5 días hasta 60 mg.",
             "Al menos una atención nutricional por trimestre."] });
       }
-      case "puer": return out({ tone: "ok", title: "60 mg de hierro elemental + 400 µg de ácido fólico al día", mg: 60, folic: 400, forms: ["sfafTab"], supp: "99199.26", lines: ["1 tableta diaria hasta 30 días después del parto."] });
+      case "puer": {
+        const dpp = p.dpp != null ? p.dpp : null;   // días posparto (F-04)
+        if (dpp != null && dpp > 30) return out({ title: "Terminó el esquema preventivo del puerperio (día " + dpp + " posparto)", lines: ["La suplementación preventiva va hasta 30 días después del parto.", "Verifique la Hb de control de los 30 días posparto."] });
+        return out({ tone: "ok", title: "60 mg de hierro elemental + 400 µg de ácido fólico al día", mg: 60, folic: 400, forms: ["sfafTab"], supp: "99199.26",
+          lines: [dpp != null ? "1 tableta diaria hasta el día 30 posparto (hoy es el día " + dpp + ")." : "1 tableta diaria hasta 30 días después del parto. Registre la fecha de parto para controlar el plazo."] });
+      }
     }
     return out({ title: "Sin esquema preventivo identificado; verifique la indicación." });
   }
@@ -881,8 +1077,13 @@ const Clin = (() => {
           notes.push("Hb en el primer control prenatal, entre las semanas 25 y 28, y entre las semanas 37 y 40.");
           break;
         case "puer":
-          notes.push("Visitas o teleorientación: a los 7 días del parto y hasta los 30 días después del parto.");
-          notes.push("Hb a los 30 días posparto.");
+          if (parseDate(p.partoDate)) {
+            add(addDays(p.partoDate, 7), "Visita domiciliaria o teleorientación (7 días posparto)", "visita");
+            add(addDays(p.partoDate, 30), "Control de Hb (30 días posparto) y fin de la suplementación preventiva", "hb");
+          } else {
+            notes.push("Visitas o teleorientación: a los 7 días del parto y hasta los 30 días después del parto.");
+            notes.push("Hb a los 30 días posparto. Registre la fecha de parto para programarlos.");
+          }
           break;
         default: notes.push("Sin esquema preventivo para este grupo.");
       }
@@ -897,7 +1098,15 @@ const Clin = (() => {
     if (x.hbAdj == null) return low ? "Adherencia menor de 75 %: reforzar la consejería; si los efectos adversos limitan la continuidad, valorar complejo polimaltosado férrico." : "Sin nueva Hb en este registro.";
     const delta = x.prevAdj != null ? r1(x.hbAdj - x.prevAdj) : null, out = [];
     if (x.mode === "treatment") {
-      if (x.cls.status === "normal") out.push(x.daysFromStart != null && x.daysFromStart >= 180 ? "Hb en rango normal con 6 meses cumplidos: cumple criterio de alta; registrar PR tras la evaluación médica." : "Hb en rango normal: continuar hasta completar 6 meses de tratamiento continuo.");
+      if (x.cls.status === "normal") {
+        // F-03: el alta exige 6 meses continuos acreditados (no días calendario) y este último control normal
+        const c = x.cont;
+        if (c && c.complete) out.push("Hb en rango normal con 6 meses de tratamiento continuo: cumple criterio de alta; registrar PR tras la evaluación médica.");
+        else if (!c) out.push("Hb en rango normal: registre la fecha de inicio del esquema para verificar los 6 meses continuos antes del alta.");
+        else if (c.active) out.push("Hb en rango normal, pero el tratamiento está suspendido desde el " + dmy(c.active.desde) + ": no corresponde el alta." + (c.needRestart ? " Pasaron más de 3 meses: iniciar un esquema nuevo previa medición de Hb." : " Reanudar y completar el esquema."));
+        else if (c.effDays < c.target) out.push("Hb en rango normal: continuar hasta completar 6 meses de tratamiento continuo (lleva " + c.effDays + " de " + c.target + " días efectivos" + (c.suspDays ? ", descontando " + c.suspDays + " días de suspensión" : "") + "; fin previsto " + dmy(c.fin) + ").");
+        else out.push("Hb en rango normal con 6 meses transcurridos, pero hubo adherencia menor de 75 % (" + c.lowAdh.map(dmy).join(", ") + "): no se acredita la continuidad; confirme con criterio médico antes del alta.");
+      }
       else if (delta == null) out.push("Sin Hb previa para comparar.");
       else if (delta >= 1) out.push("Incremento de 1 g/dL o más: respuesta esperada; continuar el esquema y los controles.");
       else if (low) out.push("Incremento menor de 1 g/dL con adherencia menor de 75 %: reforzar adherencia y consejería; valorar complejo polimaltosado férrico.");
@@ -954,11 +1163,21 @@ const Clin = (() => {
     const d = p.weeksDate ? daysBetween(p.weeksDate, date) : 0;
     return Math.max(1, Math.min(42, w + Math.floor((d || 0) / 7)));
   }
+  // Vista del paciente en una fecha: semanas proyectadas y, con fecha de parto (F-04), puerperio hasta el día 42
   function viewAt(p, date) {
+    const pd = parseDate(p.partoDate) ? p.partoDate : null;
+    if (pd && (p.preg || p.puerp)) {
+      const dpp = daysBetween(pd, date);
+      if (dpp != null && dpp >= 0) {
+        if (dpp <= 42) return Object.assign({}, p, { preg: false, puerp: true, dpp });
+        return Object.assign({}, p, { preg: false, puerp: false, dpp, puerpEnded: true });
+      }
+    }
     if (!p.preg) return p;
     const w = weeksAt(p, date);
     if (w == null) return p;
-    return Object.assign({}, p, { weeks: String(w), trimester: w <= 13 ? "1" : w <= 27 ? "2" : "3" });
+    const raw = num(p.weeks) + Math.floor((daysBetween(p.weeksDate || date, date) || 0) / 7);
+    return Object.assign({}, p, { weeks: String(w), trimester: w <= 13 ? "1" : w <= 27 ? "2" : "3", weeksOver: raw > 42 });
   }
 
   // Exámenes de apoyo al diagnóstico (NTS 213, 6.1.2.A) con su código del Manual HIS cuando lo tiene
@@ -974,7 +1193,13 @@ const Clin = (() => {
   function ferritin(v, age, p, inflam) {
     if (v == null || !age) return null;
     const under5 = age.months < 60, preg = !!p.preg && p.sex === "F";
-    if (preg && inflam) return { level: "indef", text: "La Tabla 14 no define punto de corte de ferritina para gestantes con infección o inflamación: interpretar con criterio clínico." };
+    if (preg && inflam) return { level: "indef", text: "Ferritina " + v + " µg/L en gestante con infección o inflamación: la Tabla 14 no define punto de corte para esta situación. No se clasifica; interpretar con criterio clínico y control posterior." };
+    // F-02: en gestantes la Tabla 14 da < 15 µg/L solo para el primer trimestre; en II y III no hay corte (nota e). Tampoco se aplican los cortes altos de población adulta.
+    if (preg) {
+      if (p.trimester !== "1") return { level: "indef", text: "Ferritina " + v + " µg/L en gestante" + (p.trimester ? " del " + (p.trimester === "2" ? "segundo" : "tercer") + " trimestre" : " sin trimestre registrado") + ": la Tabla 14 define el corte de 15 µg/L solo para el primer trimestre. No se clasifica; interpretar con criterio clínico." };
+      if (v < 15) return { level: "def", text: "Ferritina " + v + " µg/L, menor de 15 (gestante, primer trimestre): compatible con deficiencia de hierro según la Tabla 14." };
+      return { level: "ok", text: "Ferritina " + v + " µg/L, no menor de 15 (gestante, primer trimestre): no indica deficiencia de hierro por este criterio. La Tabla 14 no da valores altos de referencia para gestantes." };
+    }
     const cut = inflam ? (under5 ? 30 : 70) : (under5 ? 12 : 15);
     const ctx = inflam ? "con infección o inflamación" : preg ? "gestante" : under5 ? "menor de 5 años" : "5 años o más";
     const t1 = preg && p.trimester !== "1" ? " La tabla define este corte para el primer trimestre." : "";
@@ -1502,13 +1727,43 @@ const Clin = (() => {
     return "﻿" + [head].concat(rows).map((r) => r.map(q).join(",")).join("\r\n");
   }
 
+  // Fechas guardadas o importadas que no existen (p. ej. 2026-02-31): se avisan para corregirlas, no se cambian solas (F-08)
+  const DATE_FIELDS = [["dob", "Fecha de nacimiento"], ["start", "Inicio del esquema"], ["hbDate", "Fecha de la Hb"], ["fum", "Fecha de última menstruación"], ["weeksDate", "Fecha de las semanas de gestación"], ["partoDate", "Fecha de parto"]];
+  function badDates(p) {
+    const out = [];
+    if (!p) return out;
+    DATE_FIELDS.forEach(([k, t]) => { if (p[k] && !parseDate(p[k])) out.push({ field: k, label: t, value: String(p[k]) }); });
+    (p.events || []).forEach((e, i) => { if (e && e.date && !parseDate(e.date)) out.push({ field: "events." + i + ".date", label: "Fecha de una atención", value: String(e.date) }); });
+    return out;
+  }
+
+  // F-03: continuidad del tratamiento. Las suspensiones de hasta 3 meses no cuentan como días de tratamiento
+  // (se continúa hasta completar el esquema); una suspensión abierta de más de 3 meses exige nuevo esquema con Hb previa.
+  // El alta solo se propone con 6 meses efectivos, sin suspensión abierta y sin controles con adherencia menor de 75 %.
+  function continuity(p, date) {
+    const start = parseDate(p.start) ? p.start : null;
+    if (!start || !parseDate(date) || date < start) return null;
+    let suspDays = 0, active = null;
+    (p.susp || []).filter((s) => s && parseDate(s.desde) && s.desde >= start && s.desde <= date).forEach((s) => {
+      const end = parseDate(s.hasta) && s.hasta <= date ? s.hasta : null, len = Math.max(0, daysBetween(s.desde, end || date) || 0);
+      if (!end) active = Object.assign({}, s, { dias: len, mas3: addMonths(s.desde, 3) < date });
+      suspDays += len;
+    });
+    const calDays = daysBetween(start, date), target = daysBetween(start, addMonths(start, 6));
+    const effDays = Math.max(0, calDays - suspDays);
+    const lowAdh = (p.events || []).filter((e) => e && e.date >= start && e.date <= date && e.adherence != null && e.adherence < 75).map((e) => e.date);
+    return { start, calDays, suspDays, effDays, target, faltan: Math.max(0, target - effDays), fin: addDays(start, target + suspDays),
+      active, needRestart: !!(active && active.mas3), lowAdh, complete: effDays >= target && !active && !lowAdh.length };
+  }
+  const dmy = (s) => (typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(8, 10) + "/" + s.slice(5, 7) + "/" + s.slice(0, 4) : s);
+
   return { ALT, num, r1, f1, today, parseDate, addDays, addMonths, daysBetween, ageAt, ageLabel, altAdjust, hbAdjusted,
-    GROUPS, groupOf, groupLabel, bandsOf, classify, FORMS, equivalents, plan, schedule, assess, HIS, hisDefaults, hisRows,
+    GROUPS, groupOf, groupLabel, bandsOf, classify, FORMS, equivalents, precise, EQ_WARN_PCT, plan, schedule, assess, HIS, hisDefaults, hisRows,
     norm, ymOf, byDate, matches, weeksAt, viewAt, LABS, RES, hasRes, ferritin, CHILD, BUCKETS, bucketOf, popOf, size3,
     TARGET, isTarget, isSecond, teleTypes, mainType, evScore, onePerDay, dupGroups, parseDni, COMORB, EFFECTS, MEDIDAS, AREAS, lbl,
     PERIOD, rangeOf, periodOf, periodsUntil, REF_PROFILES, refProfileOf, FROTIS, LAB_TXT, labEval,
     PROFILES, setProfile, prof, NUTRI,
-    monthReport, pendings, reportText, csvMonth };
+    monthReport, pendings, reportText, csvMonth, badDates, continuity };
 })();
 </script>
 
@@ -1851,7 +2106,8 @@ const HBRegXlsx = (() => {
       ["xl/styles.xml", T.styles], ["xl/theme/theme1.xml", T.theme], ["xl/sharedStrings.xml", T.sst], ["xl/worksheets/sheet1.xml", sheetXml(rows)]]);
   }
   function b64(bytes) { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
-  return { build, b64, sheetXml };
+  const crc32hex = (bytes) => ("00000000" + crc32(bytes).toString(16)).slice(-8);
+  return { build, b64, sheetXml, crc32hex };
 })();
 </script>
 
@@ -1867,10 +2123,11 @@ const HBFua = (() => {
     ["19223", "FERROSO SULFATO HEPTAHIDRATO 20 mL 25 mg de Fe/mL SOL", "sfGotas", 20, "sol"], ["21648", "FERROSO SULFATO HEPTAHIDRATO 75 mL 25 mg de Fe/mL SOL", "sfGotas", 75, "sol"],
     ["03521", "FERROSO SULFATO 30 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 30, "jbe"], ["03523", "FERROSO SULFATO 50 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 50, "jbe"],
     ["03516", "FERROSO SULFATO 100 mL 15 mg de Fe/5 mL SOL", "sfJarabe", 100, "jbe"], ["03517", "FERROSO SULFATO 120 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 120, "jbe"],
-    ["03542", "FERROSO SULFATO 150 mL 75 mg/5 mL JBE", "sfJarabe", 150, "jbe"], ["03519", "FERROSO SULFATO 180 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 180, "jbe"],
-    ["03520", "FERROSO SULFATO 200 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 200, "jbe"], ["03545", "FERROSO SULFATO 240 mL 75 mg/5 mL JBE", "sfJarabe", 240, "jbe"],
-    ["03546", "FERROSO SULFATO 340 mL 75 mg/5 mL JBE", "sfJarabe", 340, "jbe"], ["03547", "FERROSO SULFATO 360 mL 75 mg/5 mL JBE", "sfJarabe", 360, "jbe"],
-    ["03548", "FERROSO SULFATO 500 mL 75 mg/5 mL JBE", "sfJarabe", 500, "jbe"],
+    ["03542", "FERROSO SULFATO 150 mL 75 mg/5 mL JBE", "sfJarabe15", 150, "jbe"], ["03519", "FERROSO SULFATO 180 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 180, "jbe"],
+    ["03520", "FERROSO SULFATO 200 mL 15 mg de Fe/5 mL JBE", "sfJarabe", 200, "jbe"], ["03545", "FERROSO SULFATO 240 mL 75 mg/5 mL JBE", "sfJarabe15", 240, "jbe"],
+    // 75 mg/5 mL (15 mg/mL) es otra concentración: no se sugiere con la dosis calculada para 15 mg/5 mL (F-05, trazabilidad)
+    ["03546", "FERROSO SULFATO 340 mL 75 mg/5 mL JBE", "sfJarabe15", 340, "jbe"], ["03547", "FERROSO SULFATO 360 mL 75 mg/5 mL JBE", "sfJarabe15", 360, "jbe"],
+    ["03548", "FERROSO SULFATO 500 mL 75 mg/5 mL JBE", "sfJarabe15", 500, "jbe"],
     ["03552", "FERROSO SULFATO 300 mg (Equiv. 60 mg Hierro) TAB", "sfTab", 1, "tab"],
     ["03513", "ÁCIDO FÓLICO + FERROSO SULFATO 400 µg + 60 mg Fe+2 TAB", "sfafTab", 1, "tab"],
     ["21643", "HIERRO POLIMALTOSA 2 mL 50 mg/mL SOL", "pmGotas", 2, "sol"], ["28551", "HIERRO POLIMALTOSA 20 mL 50 mg/mL SOL", "pmGotas", 20, "sol"],
@@ -1984,10 +2241,13 @@ const HBFua = (() => {
     // Medicamentos: hierro según el plan vigente
     const pl = ctx.plan || {};
     if (pl.mg && (pl.forms || []).length) {
-      const form = pl.forms.find((k) => MEDS.some((m) => m.form === k)) || pl.forms[0];
-      const s = suggestMed(form, pl.mg);
+      // Solo se sugiere una presentación cuya cantidad administrable sea precisa (F-05); si ninguna lo es, queda para el médico
+      const C = typeof Clin !== "undefined" ? Clin : {}, eqs = C.equivalents ? C.equivalents(pl.mg, pl.forms, pl.max) : [];
+      const okForm = (k) => !C.precise || C.precise(eqs.find((e) => e.key === k));
+      const form = pl.forms.find((k) => okForm(k) && MEDS.some((m) => m.form === k)) || pl.forms.find(okForm);
+      const s = form ? suggestMed(form, pl.mg) : null;
       if (s) f.meds.push({ code: s.code, name: s.name, qty: s.qty, dx: dx1 });
-      else f.meds.push({ code: "", name: form === "sfafTab" ? "SULFATO FERROSO + ACIDO FOLICO TAB" : form === "pmJarabe" ? "HIERRO POLIMALTOSADO JBE" : "", qty: "", dx: dx1 });
+      else f.meds.push({ code: "", name: !form ? "" : form === "sfafTab" ? "SULFATO FERROSO + ACIDO FOLICO TAB" : form === "pmJarabe" ? "HIERRO POLIMALTOSADO JBE" : form === "pmTab" ? "HIERRO POLIMALTOSADO 100 mg TAB" : "", qty: "", dx: dx1, nota: form ? "" : "Ninguna presentación da una cantidad precisa para " + pl.mg + " mg: elija el producto y la cantidad." });
     }
     // Procedimientos y laboratorio
     if (ev.hb != null) f.procs.push({ code: "85018.01", name: PROC["85018.01"], ind: "1", eje: "1", dx: dx1, res: String(ev.hb) });
@@ -2374,7 +2634,7 @@ const HBFua = (() => {
     function addNote(n, key) { const ym = key || C.ymOf(n.date); (notes[ym] = notes[ym] || []).push(n); saveNotes(ym); }
     function delNote(ym, id) { notes[ym] = (notes[ym] || []).filter((n) => n.id !== id); saveNotes(ym); }
 
-    function exportAll() { return { version: 2, exported: C.today(), meta: clone(meta), patients: Array.from(patients.values()).map(clone), notes: clone(notes) }; }
+    function exportAll() { return { version: 2, schema: 3, app: C.prof().id, exported: C.today(), meta: clone(meta), patients: Array.from(patients.values()).map(clone), notes: clone(notes) }; }
     function importAll(j) {
       let n = 0;
       (j.patients || []).forEach((raw) => {
@@ -2394,6 +2654,15 @@ const HBFua = (() => {
       // Sesiones educativas del respaldo (las fotos de la lista se restauran aparte)
       const ses = j.meta && Array.isArray(j.meta.sesiones) ? j.meta.sesiones.filter((x) => x && typeof x.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(x.id)) : [];
       if (ses.length) { const have = new Set((meta.sesiones || []).map((x) => x.id)); const add = ses.filter((x) => !have.has(x.id)); if (add.length) setMeta("sesiones", (meta.sesiones || []).concat(add)); }
+      // Configuración (F-09): en una base sin pacientes se restaura toda; en una con registros solo lo que falta (nunca se pisa lo local)
+      const M = j.meta && typeof j.meta === "object" ? j.meta : {};
+      const CFG = (k) => /^goals_[a-z]+$/.test(k) || ["fuaCfg", "labRefs", "regAct", "periodStart", "dailyMail", "defAlt"].includes(k);
+      const clean = j.__cleanBase === true;
+      Object.keys(M).filter(CFG).forEach((k) => {
+        const v = M[k]; if (v == null) return;
+        const local = meta[k], empty = local == null || local === "" || (typeof local === "object" && !Object.keys(local).length);
+        if (clean || empty) setMeta(k, k === "dailyMail" ? Object.assign({}, local || {}, { to: (v && v.to) || (local && local.to) || "" }) : clone(v));
+      });
       return n;
     }
     function status() {
@@ -2595,7 +2864,7 @@ const HBFua = (() => {
     </section>`;
   }
   const viewPacientes = () => `${storeNote()}${searchCard(listLimit, true)}
-    <div class="actions"><button class="btn" data-act="backup">Exportar respaldo de todos los pacientes</button><button class="btn" data-act="restore">Restaurar respaldo</button></div>`;
+    <div class="actions"><button class="btn" data-act="backup">Respaldo completo (pacientes, configuración y fotos)</button><button class="btn" data-act="restore">Restaurar respaldo</button></div>`;
 
   /* ================= Ajustes ================= */
   function fuaCfgCard() {
@@ -2816,7 +3085,7 @@ const HBFua = (() => {
     if (!mailOk()) return "";
     const m = Store.meta().dailyMail || {}, st = mailState(), on = !!st.activo, min = st.minutos != null ? st.minutos : 1200;
     return `<section class="card"><h2>Respaldo diario por correo</h2>
-      <p class="muted">Cada día, a la hora elegida, el teléfono le avisa con una notificación. Al tocarla e ingresar su PIN se abre el correo con el respaldo completo de sus pacientes adjunto: solo toque Enviar.</p>
+      <p class="muted">Cada día, a la hora elegida, el teléfono le avisa con una notificación. Al tocarla e ingresar su PIN se abre el correo con la exportación liviana de sus pacientes (datos y configuración, sin las fotos de las listas de asistencia) adjunta: solo toque Enviar. Para guardar también las fotos use «Respaldo completo».</p>
       <label class="check"><input type="checkbox" id="dm-on" ${on ? "checked" : ""}> Recordarme enviar el respaldo todos los días</label>
       ${BR().shareFiles ? `<label class="check"><input type="checkbox" data-rgmail="1" ${regCfg().mail !== false ? "checked" : ""}> Adjuntar el registro de actividades del médico (Excel) del día</label>` : ""}
       <div class="grid">
@@ -2830,13 +3099,28 @@ const HBFua = (() => {
     </section>`;
   }
   // Respaldo: pacientes y sesiones, con las fotos de las listas de asistencia de los últimos 6 meses
-  async function backupData() {
-    const exp = Store.exportAll(), lim = C.addMonths(C.today(), -6), fotos = {};
-    for (const x of (exp.meta.sesiones || []).filter((s) => s.date >= lim)) {
-      for (const k of x.fotos || []) { const d = await Store.photoGet("ses_" + x.id, k); if (d) fotos["ses_" + x.id + "|" + k] = d; }
+  // Respaldo completo: pacientes, notas, sesiones, configuración y TODAS las fotos de las listas de asistencia.
+  // Exportación liviana (correo diario): lo mismo sin fotos, para que el adjunto no crezca sin límite (F-09).
+  const sumOf = (txt) => HBRegXlsx.crc32hex(new TextEncoder().encode(txt));
+  async function backupData(kind) {
+    const exp = Store.exportAll(), fotos = {};
+    exp.kind = kind === "liviano" ? "liviano" : "completo";
+    if (exp.kind === "completo") {
+      for (const x of exp.meta.sesiones || []) {
+        for (const k of x.fotos || []) { const d = await Store.photoGet("ses_" + x.id, k); if (d) fotos["ses_" + x.id + "|" + k] = d; }
+      }
+      if (Object.keys(fotos).length) exp.sesFotos = fotos;
     }
-    if (Object.keys(fotos).length) exp.sesFotos = fotos;
+    exp.counts = { patients: exp.patients.length, events: exp.patients.reduce((t, p) => t + (p.events || []).length, 0), sesiones: (exp.meta.sesiones || []).length, fotos: Object.keys(fotos).length };
+    exp.checksum = sumOf(JSON.stringify(exp.patients) + JSON.stringify(exp.meta.sesiones || []));
     return exp;
+  }
+  // Valida un archivo antes de tocar nada: formato, suma de verificación y conteos
+  function checkBackup(j) {
+    if (!j || !Array.isArray(j.patients)) return "El archivo no es un respaldo de esta app.";
+    if (j.checksum && j.checksum !== sumOf(JSON.stringify(j.patients) + JSON.stringify((j.meta && j.meta.sesiones) || []))) return "El respaldo está dañado o fue modificado (no coincide la suma de verificación). No se restauró nada.";
+    if (j.counts && j.counts.patients !== j.patients.length) return "El respaldo está incompleto. No se restauró nada.";
+    return "";
   }
   async function sesFotosRestore(j) {
     const F = (j && j.sesFotos) || {};
@@ -2851,9 +3135,9 @@ const HBFua = (() => {
     const hoy = list.reduce((n, p) => n + p.events.filter((e) => e.date === t).length, 0);
     let avance = "";
     try { const pp = currentPeriod(), G = goals(), R = C.monthReport(Store.list(), pp); avance = "\nAvance del periodo (" + fmtShort(pp.from) + " al " + fmtShort(pp.to) + "): " + R.consult.meta + " de " + G.goalC + " " + (P.mainMany || "Consultas médicas").toLowerCase() + "."; } catch (e) { /* sin avance */ }
-    const body = "Respaldo de " + P.name + " del " + fmtDate(t) + ".\n\nPacientes registrados: " + list.length + "\nAtenciones registradas hoy: " + hoy + avance
+    const body = "Exportación liviana de " + P.name + " del " + fmtDate(t) + " (sin fotos; el respaldo completo se descarga en Ajustes).\n\nPacientes registrados: " + list.length + "\nAtenciones registradas hoy: " + hoy + avance
       + "\n\nPara restaurarlo: en la app, Ajustes → Respaldo → «Restaurar respaldo», y elija el archivo adjunto descargado.\n\nContiene datos personales de salud: no lo reenvíe.";
-    const B = BR(), json = JSON.stringify(await backupData()), rows = regRows(t, t), cfg = regCfg();
+    const B = BR(), json = JSON.stringify(await backupData("liviano")), rows = regRows(t, t), cfg = regCfg();
     if (B.shareFiles && cfg.mail !== false) {
       const files = [{ name: regName(t, t), b64: HBRegXlsx.b64(HBRegXlsx.build(rows)) }, { name: "respaldo_" + P.id + "_" + t + ".json", text: json }];
       B.shareFiles(JSON.stringify(files), m.to || "", "Registro de actividades y respaldo " + P.name + " · " + fmtDate(t),
@@ -2900,7 +3184,7 @@ const HBFua = (() => {
       <p class="muted">Código del equipo: <span class="code">${esc(L.code)}</span>. Cada clave dura 40 días; al vencer, la app pide una nueva para este teléfono.</p>
       ${(L.history || []).length > 1 ? `<ul class="rowlist">${L.history.map((h, n) => `<li>Clave ${n + 1}: colocada el ${fmtShort(h.date)}, vigente hasta el ${fmtShort(h.expires)}</li>`).join("")}</ul>` : ""}</section>` : ""}
     <section class="card"><h2>Respaldo</h2>
-      <div class="actions"><button class="btn" data-act="backup">Exportar respaldo de todos los pacientes</button><button class="btn" data-act="restore">Restaurar respaldo</button></div></section>`;
+      <div class="actions"><button class="btn" data-act="backup">Respaldo completo (pacientes, configuración y fotos)</button><button class="btn" data-act="restore">Restaurar respaldo</button></div></section>`;
   }
 
   /* ================= Paciente ================= */
@@ -2948,10 +3232,60 @@ const HBFua = (() => {
     </section>`;
   }
 
+  /* ===== Continuidad del tratamiento (F-03): suspensiones, reinicio y esquemas anteriores ===== */
+  let suspD = null;   // { desde, motivo } o { idx, hasta, hb } mientras se registra
+  function contCard(p) {
+    const ant = p.tratAnt || [], S = p.susp || [];
+    if (p.mode !== "treatment" && !ant.length && !S.length) return "";
+    const c = p.mode === "treatment" ? C.continuity(p, C.today()) : null, open = S.findIndex((s) => !s.hasta);
+    const row = (s, i) => `<li>${fmtDate(s.desde)} → ${s.hasta ? fmtDate(s.hasta) + " (" + C.daysBetween(s.desde, s.hasta) + " días)" : "<b>sin reiniciar</b>"} · ${esc(s.motivo || "sin motivo")}${s.hbReinicio ? " · Hb al reiniciar " + esc(s.hbReinicio) + " g/dL" : ""}${s.nuevo ? " · <b>nuevo esquema</b>" : ""}</li>`;
+    return `<section class="card"><h2>Continuidad del tratamiento</h2>
+      ${c ? `<p>${c.complete ? "<b>6 meses de tratamiento continuo cumplidos.</b>" : `Lleva <b>${c.effDays} de ${c.target} días</b> de tratamiento efectivo${c.suspDays ? " (se descuentan " + c.suspDays + " días suspendido)" : ""}. Fin previsto: <b>${fmtDate(c.fin)}</b>.`}</p>
+        ${c.active ? `<div class="note ${c.needRestart ? "sev" : "warn"}">Suspendido desde el ${fmtDate(c.active.desde)} (${c.active.dias} días).${c.needRestart ? " Pasaron más de 3 meses: al reiniciar se abre un esquema nuevo, previa medición de Hb." : " Si reinicia antes de 3 meses, continúa hasta completar el esquema."}</div>` : ""}
+        ${c.lowAdh.length ? `<div class="note warn">Adherencia menor de 75 % en ${c.lowAdh.map(fmtShort).join(", ")}: la app no propone el alta hasta que usted confirme la continuidad.</div>` : ""}` : p.mode === "treatment" ? `<p class="muted">Registre la fecha de inicio del esquema para contar los 6 meses continuos.</p>` : ""}
+      ${S.length ? `<h3>Suspensiones</h3><ul class="rowlist">${S.map(row).join("")}</ul>` : ""}
+      ${p.mode === "treatment" && C.parseDate(p.start) ? (open < 0 ? `<div class="grid">
+          <label class="field" for="su-desde"><span>Suspendido desde</span><input type="date" id="su-desde" data-su="desde" max="${C.today()}" min="${esc(p.start)}" value="${esc((suspD && suspD.desde) || "")}"></label>
+          <label class="field" for="su-motivo"><span>Motivo</span><input id="su-motivo" data-su="motivo" value="${esc((suspD && suspD.motivo) || "")}" placeholder="Efectos adversos, viaje, falta de producto…" autocomplete="off"></label></div>
+          <div class="actions"><button class="btn" data-act="su-add">Registrar suspensión</button></div>`
+        : `<div class="grid">
+          <label class="field" for="su-hasta"><span>Fecha de reinicio</span><input type="date" id="su-hasta" data-su="hasta" max="${C.today()}" min="${esc(S[open].desde)}" value="${esc((suspD && suspD.hasta) || "")}"></label>
+          <label class="field" for="su-hb"><span>Hb al reiniciar (g/dL)${c && c.needRestart ? " · obligatoria" : ""}</span><input id="su-hb" data-su="hb" inputmode="decimal" value="${esc((suspD && suspD.hb) || "")}" autocomplete="off"></label></div>
+          <div class="actions"><button class="btn primary" data-act="su-restart">Registrar reinicio</button></div>`) : ""}
+      ${ant.length ? `<h3>Esquemas anteriores</h3><ul class="rowlist">${ant.map((t) => `<li>${fmtDate(t.start)} → ${fmtDate(t.end)} · ${esc(t.motivo)}</li>`).join("")}</ul>` : ""}
+    </section>`;
+  }
+  function suspAdd() {
+    const p = cur, d = suspD || {};
+    if (!C.parseDate(d.desde) || d.desde < p.start || d.desde > C.today()) { toast("Escriba la fecha desde la que suspendió (entre el inicio del esquema y hoy)."); return; }
+    (p.susp = p.susp || []).push({ id: newId("s"), desde: d.desde, motivo: (d.motivo || "").trim(), hasta: "", created: C.today() });
+    suspD = null; Store.save(p); render(true); toast("Suspensión registrada: los días suspendido no cuentan para los 6 meses.");
+  }
+  function suspRestart() {
+    const p = cur, S = p.susp || [], i = S.findIndex((s) => !s.hasta), d = suspD || {};
+    if (i < 0) return;
+    const s = S[i];
+    if (!C.parseDate(d.hasta) || d.hasta < s.desde || d.hasta > C.today()) { toast("Escriba la fecha de reinicio (desde la suspensión hasta hoy)."); return; }
+    const mas3 = C.addMonths(s.desde, 3) < d.hasta, hb = C.num(d.hb);
+    if (mas3 && hb == null) { toast("Pasaron más de 3 meses: registre la Hb al reiniciar para abrir el esquema nuevo."); return; }
+    s.hasta = d.hasta; s.hbReinicio = hb == null ? "" : String(hb);
+    if (mas3) {   // esquema nuevo: el anterior queda en el historial, no se borra nada
+      s.nuevo = true;
+      (p.tratAnt = p.tratAnt || []).push({ start: p.start, end: s.desde, motivo: "Suspendido más de 3 meses (" + (s.motivo || "sin motivo") + "); reinicio el " + fmtDate(d.hasta), closed: C.today() });
+      p.start = d.hasta;
+    }
+    suspD = null; Store.save(p); render(false);
+    toast(mas3 ? "Esquema nuevo desde el " + fmtDate(d.hasta) + ". El anterior queda en el historial." : "Reinicio registrado: el esquema continúa hasta completar los 6 meses.");
+  }
+  function badDatesNote(p) {
+    const B = C.badDates(p);
+    return B.length ? `<div class="note warn" role="alert"><b>Hay ${B.length === 1 ? "una fecha que no existe" : B.length + " fechas que no existen"} en este registro.</b> Corríjala${B.length === 1 ? "" : "s"} para que la edad, los controles y la clasificación salgan bien: ${B.map((b) => esc(b.label) + " (" + esc(b.value) + ")").join(", ")}.</div>` : "";
+  }
   function viewFicha(D) {
     const p = D.p, woman = p.sex === "F" && (!D.age || D.age.years >= 10), infant = D.age && D.age.months < 6;
     return `
     ${p.example ? `<div class="note">Esta ficha muestra <b>datos de ejemplo</b> y no se guarda. Use «Nuevo paciente» para registrar los suyos.</div>` : ""}
+    ${badDatesNote(p)}
     ${p.example ? "" : `<section class="card modcard"><h2>Modalidad de la atención</h2>
       <div class="seg mods" role="radiogroup" aria-label="Modalidad de la atención">${MODS.map(([v, t]) => `<label for="f-mod-${v}"><input type="radio" id="f-mod-${v}" name="modalidad" data-k="modalidad" value="${v}" ${(p.modalidad || "intramural") === v ? "checked" : ""}>${t}</label>`).join("")}</div>
       <p class="muted">${modNote(p)}</p></section>`}
@@ -2990,14 +3324,20 @@ const HBFua = (() => {
         <label for="f-al-si"><input type="radio" id="f-al-si" name="allergy" data-k="allergy" value="si" ${p.allergy === "si" ? "checked" : ""}>Sí</label></div>
       ${p.allergy === "si" ? `<label class="field" for="f-allergyText"><span>¿A qué?</span><textarea id="f-allergyText" data-k="allergyText">${esc(p.allergyText)}</textarea></label>` : ""}
       <h3>Condición</h3><div class="checks">
-        ${woman ? chk("preg", "Gestante") + chk("puerp", "Puérpera") + chk("fertile", "Mujer en edad fértil") : ""}
+        ${woman ? chk("preg", "Gestante") + chk("puerp", "Puérpera") + (!D.age || (D.age.years >= 18 && D.age.years <= 49) || p.fertile ? chk("fertile", "Mujer en edad fértil (18 a 49 años)") : "") : ""}
+        ${woman && p.fertile && D.age && (D.age.years < 18 || D.age.years > 49) ? `<div class="note warn">«Mujer en edad fértil» está marcada, pero la edad (${D.age.years} años) está fuera del rango de 18 a 49: no se aplica. ${D.age.years < 18 ? "Se usa el grupo adolescente." : "Desmárquela si corresponde."}</div>` : ""}
         ${infant ? chk("preterm", "Prematuro/a o bajo peso al nacer") : ""}
         ${chk("altoRiesgo", "Alto riesgo de anemia (prioriza la visita domiciliaria)")}</div>
       ${p.altoRiesgo ? `<label class="field" for="f-altoRiesgoTxt"><span>Motivo del alto riesgo</span><input id="f-altoRiesgoTxt" data-k="altoRiesgoTxt" value="${esc(p.altoRiesgoTxt)}" placeholder="Prematuridad, bajo peso al nacer, antecedente de anemia materna…" autocomplete="off"></label>` : ""}
       ${woman && p.preg ? `<div class="grid">
         ${inp("weeks", "Semanas de gestación", 'type="number" inputmode="numeric" min="1" max="42" step="1"', p.weeksDate ? "Registradas el " + fmtDate(p.weeksDate) + "; la app las hace avanzar." : "")}
         <div class="field"><span>Edad gestacional hoy</span><output id="o-gest">${esc(gestNow(D))}</output></div>
-        ${C.num(p.weeks) == null ? `<label class="field" for="f-trimester"><span>Trimestre (si no conoce las semanas)</span>${sel("f-trimester", 'data-k="trimester"', p.trimester, [["", "Seleccione"], ["1", "I (hasta semana 13)"], ["2", "II (semanas 14 a 27)"], ["3", "III (semana 28 en adelante)"]])}</label>` : ""}</div>` : ""}
+        ${C.num(p.weeks) == null ? `<label class="field" for="f-trimester"><span>Trimestre (si no conoce las semanas)</span>${sel("f-trimester", 'data-k="trimester"', p.trimester, [["", "Seleccione"], ["1", "I (hasta semana 13)"], ["2", "II (semanas 14 a 27)"], ["3", "III (semana 28 en adelante)"]])}</label>` : ""}</div>
+        ${chk("apnTardia", "Inició la atención prenatal después de la semana 32 (dosis preventiva de 120 mg + 800 µg)")}
+        ${D.pv && D.pv.weeksOver ? `<div class="note warn">Las semanas proyectadas pasan de 42: registre la fecha de parto o corrija las semanas.</div>` : ""}` : ""}
+      ${woman && (p.preg || p.puerp) ? `<div class="grid">
+        ${inp("partoDate", "Fecha de parto", `type="date" max="${C.today()}"`, (p.partoHist || []).length ? "Corregida " + p.partoHist.length + (p.partoHist.length === 1 ? " vez" : " veces") + "; última fecha anterior: " + fmtDate(p.partoHist[p.partoHist.length - 1].prev) + "." : "Con la fecha de parto la app pasa a puérpera, cuenta los días posparto y cierra el puerperio a los 42 días.")}
+        ${C.parseDate(p.partoDate) ? `<div class="field"><span>Días posparto hoy</span><output>${esc(String(C.daysBetween(p.partoDate, C.today())))}${C.daysBetween(p.partoDate, C.today()) > 42 ? " (puerperio terminado)" : C.daysBetween(p.partoDate, C.today()) > 30 ? " (terminó el esquema preventivo)" : ""}</output></div>` : ""}</div>` : ""}
     </section>
     <section class="card"><h2>Hemoglobina de diagnóstico e intervención</h2>
       <div class="grid">
@@ -3009,6 +3349,7 @@ const HBFua = (() => {
       </div>
       <label class="field" for="f-notes"><span>Observaciones</span><textarea id="f-notes" data-k="notes">${esc(p.notes)}</textarea></label>
     </section>
+    ${p.example ? "" : contCard(p)}
     ${p.example ? "" : linkCard(D)}
     <div class="actions">
       <button class="btn primary" data-act="ptab" data-to="atenciones">Registrar atención →</button>
@@ -3035,10 +3376,12 @@ const HBFua = (() => {
         ${pl.switchTo ? `<div><button class="btn small" data-act="mode" data-to="${pl.switchTo}">Cambiar a ${pl.switchTo === "treatment" ? "Tratamiento" : "Prevención"}</button></div>` : ""}
       </div>
       ${pl.refer ? `<div class="note ${pl.tone === "stop" ? "stop" : "warn"}"><b>${esc(pl.refer)}</b></div>` : ""}
-      ${eq.length ? `<h3>Equivalencia de la dosis diaria</h3><div class="tablewrap"><table>
-        <thead><tr><th>Producto</th><th class="num">Cantidad al día</th><th class="num">Hierro elemental</th></tr></thead>
-        <tbody>${eq.map((e) => `<tr><td>${esc(e.name)}</td><td class="num">${e.qty} ${e.unit}</td><td class="num">${C.f1(e.mg)} mg</td></tr>`).join("")}</tbody></table></div>
-        <p class="muted">Cantidades redondeadas a la unidad administrable más cercana. Confirme la concentración impresa en el producto antes de indicar.</p>` : ""}`;
+      ${eq.length ? `<h3>Equivalencia de la dosis diaria</h3>
+        <p class="muted">Dosis calculada: <b class="num">${C.f1(pl.mg)} mg</b> de hierro elemental al día${pl.max ? " (máximo " + pl.max + " mg)" : ""}. La cantidad administrable se muestra aparte, con su diferencia.</p>
+        <ul class="eqlist">${eq.map((e) => `<li class="eq-${e.tone}"><div class="eq-name">${esc(e.name)}<small class="muted">${esc(e.conc)}</small></div>
+          <div class="eq-qty num">${e.qty != null ? `<b>${e.qty} ${esc(e.unit)}</b> = ${C.f1(e.mg)} mg <span class="eq-diff">${e.diffPct === 0 ? "exacta" : (e.diffPct > 0 ? "+" : "") + e.diffPct + "\u00a0%"}</span>` : "<b>Sin cantidad exacta</b>"}</div>
+          ${e.warn ? `<p class="eq-note">${e.tone === "warn" ? "⚠ " : ""}${esc(e.warn)}</p>` : ""}</li>`).join("")}</ul>
+        <p class="muted">Confirme la concentración impresa en el producto antes de indicar. Con diferencia mayor de ${C.EQ_WARN_PCT} % o sin cantidad exacta, la presentación no se sugiere sola en el FUA.</p>` : ""}`;
   }
   function resSummary(e, D) {
     const r = e.res || {}, items = C.RES.filter(([k]) => r[k] !== undefined && r[k] !== "").map(([k, t, u]) => `${t}: <b class="num">${esc(r[k])}</b> ${u}`);
@@ -3553,6 +3896,10 @@ const HBFua = (() => {
   // Una vez por app: las atenciones ya registradas cuyo HIS, notas o FUA indican telemonitoreo, teleconsulta, teleorientación
   // o consulta extramural pasan a ese tipo o lugar (así suman donde corresponde en las metas y el HIS queda completo)
   const ACT_TXT = { "99499.10": "Telemonitoreo", "99499.01": "Teleconsulta en línea", "99499.08": "Teleorientación sincrónica" };
+  async function snapV217() {
+    if (Store.meta().preV217) return;
+    try { await Store.photoPut("respaldo", "pre_v2_17", JSON.stringify(Store.exportAll())); Store.setMeta("preV217", C.today()); } catch (e) { /* se reintenta en la próxima apertura */ }
+  }
   function migrateMod() {
     if (Store.meta().modMig1) return 0;
     let n = 0;
@@ -3811,7 +4158,11 @@ const HBFua = (() => {
   function renderStatus() {
     const s = Store.status(), el = $("status");
     el.dataset.tone = s.tone;
-    el.innerHTML = esc(s.text) + (s.retry ? ' <button data-act="retry">Reintentar</button>' : "");
+    // Etiqueta breve en el encabezado; el texto completo de Store.status() queda para lectores de pantalla y al mantener presionado
+    const short = s.tone === "ok" ? "Guardado" : s.tone === "warn" ? "Guardado solo aquí" : s.tone === "err" ? (s.retry ? "Error al guardar" : "Error al leer")
+      : s.text === "Guardando…" ? "Guardando…" : "Cargando…";
+    el.title = s.text;
+    el.innerHTML = `<span aria-hidden="true">${esc(short)}</span><span class="vh">${esc(s.text)}</span>` + (s.retry ? ' <button data-act="retry">Reintentar</button>' : "");
   }
   const typing = () => { const a = document.activeElement; return !!a && $("view").contains(a) && (a.tagName === "TEXTAREA" || a.tagName === "SELECT" || (a.tagName === "INPUT" && a.type !== "checkbox" && a.type !== "radio")); };
   function render(keepFocus) {
@@ -3819,10 +4170,15 @@ const HBFua = (() => {
     if (route === "paciente" && !cur) route = "pacientes";
     applyProfile();
     ["inicio", "pacientes", "reporte", "ajustes"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === route || (t === "pacientes" && route === "paciente"))));
+    if ($("tab-mas")) $("tab-mas").setAttribute("aria-selected", String(route === "ajustes" || route === "sesiones"));
     $("view").innerHTML = route === "inicio" ? viewInicio() : route === "pacientes" ? viewPacientes() : route === "reporte" ? viewReporte() : route === "ajustes" ? viewAjustes() : route === "sesiones" ? viewSesiones() : viewPaciente();
     if (route === "paciente" && ptab === "atenciones") updateLab();
+    UX.sections();
     renderStatus(); stale = false; hdrSoon();
     if (!purgePhotos.done && Store.status().tone !== "busy") { purgePhotos.done = true; purgePhotos().catch(() => {}); }
+    // v2.17: antes de usar los campos nuevos se guarda una vez una copia completa de los datos de v2.16 en el equipo.
+    // Los campos nuevos (fecha de parto, suspensiones, esquemas anteriores…) solo se agregan; v2.16 puede seguir leyendo la base.
+    if (!snapV217.done && Store.status().tone !== "busy" && !Store.st.loading && Store.st.mode !== "pending") { snapV217.done = true; snapV217(); }
     if (!migrateMod.done && Store.status().tone !== "busy" && !Store.st.loading && Store.st.mode !== "pending") {
       migrateMod.done = true;
       const n = migrateMod();
@@ -3910,7 +4266,9 @@ const HBFua = (() => {
     toast("Atención de hoy registrada como " + modType(m) + (m === "extramural" ? " extramural" : "") + "; HIS actualizado.");
   }
   function setP(k, v) {
-    const p = cur; p[k] = v;
+    const p = cur;
+    if (k === "partoDate" && p.partoDate && C.parseDate(p.partoDate) && v !== p.partoDate) (p.partoHist = p.partoHist || []).push({ prev: p.partoDate, next: v, on: C.today() });   // F-04: corrección documentada
+    p[k] = v;
     if (["acompNombre", "acompParentesco", "madreNombre", "phone1", "phone2", "dob"].includes(k)) { syncMinorRef(p); const o = $("o-ref"); if (o) o.textContent = refOf(p) || "El familiar que acude"; }
     if (k === "preg" && v) p.puerp = false;
     if (k === "puerp" && v) p.preg = false;
@@ -3961,7 +4319,8 @@ const HBFua = (() => {
     const ev = { id: d.i != null ? p.events[d.i].id : newId("e"), date, type: d.type, hb, hbFecha: hb != null && C.parseDate(hbFecha) && hbFecha !== date ? hbFecha : "", hbAdj, clsLabel: hbAdj == null ? "" : cls.label, sev: hbAdj == null ? "" : (cls.his || ""), anemia, g, am: age ? age.months : null,
       delta, weight: w, height: h, adherence: adh, adverse: d.tol === "efectos" ? d.adverse.slice() : [], ram: !!d.ram, ramNote: (d.ramNote || "").trim(), dx, orders: d.orders.slice(), res: cleanRes(d.res), resEval: !!d.resEval,
       ref: d.ref, refDest: (d.refDest || "").trim(), refReason: (d.refReason || "").trim(), mode: p.mode, dStart: ds != null && ds >= 0 ? ds : null, dose: pl.title, notes: (d.notes || "").trim(),
-      decision: hbAdj == null && adh == null ? "" : C.assess({ mode: p.mode, hbAdj, prevAdj, cls, daysFromStart: ds, adherence: adh }),
+      decision: hbAdj == null && adh == null ? "" : C.assess({ mode: p.mode, hbAdj, prevAdj, cls, daysFromStart: ds, adherence: adh,
+        cont: C.continuity(Object.assign({}, p, { events: p.events.filter((x, k) => k !== d.i).concat([{ date, adherence: adh }]) }), date) }),
       comorb: d.comorb.slice(), comorbTx: (d.comorbTx || "").trim(), tol: d.adverse.length ? "efectos" : d.tol, medidas: d.tol === "efectos" || d.adverse.length ? d.medidas.slice() : [],
       medidasTxt: d.tol === "efectos" || d.adverse.length ? (d.medidasTxt || "").trim() : "", coord: d.coord.slice(), consej: !!d.consej, regHC: !!d.regHC, regHIS: !!d.regHIS, nutri: d.nutri || "",
       lugar: d.type === C.mainType() ? d.lugar || "intramural" : "", hemDias: d.type === "Consulta nutricional" && d.hemDias !== "" && d.hemDias != null ? +d.hemDias : "", consejHem: d.type === "Consulta nutricional" && !!d.consejHem, visitWhy: d.type === "Visita domiciliaria" ? d.visitWhy || "seguimiento" : "" };
@@ -4038,7 +4397,7 @@ const HBFua = (() => {
 
   /* ================= Diálogos y archivos ================= */
   function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2600); }
-  function closeModal() { $("modal").hidden = true; $("modal-body").innerHTML = ""; }
+  function closeModal() { $("modal").hidden = true; $("modal").classList.remove("as-sheet"); $("modal-body").innerHTML = ""; }
   function confirmBox(msg, yesLabel, onYes) {
     $("modal-body").innerHTML = `<h2>${esc(msg)}</h2><div class="actions"><button class="btn danger" id="m-yes">${esc(yesLabel)}</button><button class="btn" id="m-no">Cancelar</button></div>`;
     $("modal").hidden = false;
@@ -4080,12 +4439,19 @@ const HBFua = (() => {
   $("imp").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     const rd = new FileReader();
-    rd.onload = () => {
+    rd.onload = async () => {
       try {
         const j = JSON.parse(String(rd.result));
         const data = j && Array.isArray(j.patients) ? j : j && j.patient ? { patients: [Object.assign({}, j.patient, { events: j.followups || j.events || [] })] } : null;
         if (!data) throw new Error("formato");
-        const n = Store.importAll(data); sesFotosRestore(j); render(false); toast(n + (n === 1 ? " paciente restaurado." : " pacientes restaurados."));
+        const bad = data === j ? checkBackup(j) : "";
+        if (bad) { toast(bad); e.target.value = ""; return; }
+        // Antes de restaurar se guarda el estado actual en el equipo; se conserva hasta la próxima restauración verificada
+        try { await Store.photoPut("respaldo", "previo", JSON.stringify(await backupData("completo"))); Store.setMeta("preRestore", C.today()); } catch (err) { toast("No se pudo guardar una copia del estado actual; no se restauró nada."); e.target.value = ""; return; }
+        data.__cleanBase = Store.list().filter((x) => !x.example).length === 0;
+        const n = Store.importAll(data); await sesFotosRestore(j); render(false);
+        const nb = Store.list().filter((x) => !x.example && C.badDates(x).length).length;
+        toast(n + (n === 1 ? " paciente restaurado." : " pacientes restaurados.") + (nb ? " " + nb + (nb === 1 ? " tiene" : " tienen") + " fechas que no existen: revise su ficha." : ""));
       } catch (err) { toast("El archivo no es un respaldo de esta app."); }
       e.target.value = "";
     };
@@ -4255,6 +4621,7 @@ const HBFua = (() => {
     if (!typed) return;
     if (ds.ciel) { const [sc, i] = ds.ciel.split(":"), L = cieItems(sc); if (L && L[+i]) { L[+i].lab = el.value.toUpperCase().trim(); if (sc === "his") Store.save(cur); } return; }
     if (ds.sd) { if (!sesD) sesD = sesBlank(); sesD[ds.sd] = el.value; return; }
+    if (ds.su) { suspD = suspD || {}; suspD[ds.su] = el.value; return; }
     if (ds.rg) { Store.setMeta("regAct", Object.assign(regCfg(), { [ds.rg]: el.value.trim() })); return; }
     if (ds.cieq) { const r = $("cie-res-" + ds.cieq); if (r) r.innerHTML = cieResHtml(ds.cieq, el.value); return; }
     if (ds.q) { q = el.value; listLimit = 40; $("q-res").innerHTML = resultsHtml(ds.q === "full" ? listLimit : 6, ds.q === "full"); }
@@ -4287,7 +4654,7 @@ const HBFua = (() => {
       if (ds.k === "dob" && C.num(cur.hb) != null) setTimeout(() => syncFicha("hb"), 0);
       if (ds.k === "modalidad") { setP("modalidad", el.value); applyMod(); return; }
       if (choice) { setP(ds.k, el.type === "checkbox" ? el.checked : el.value); render(true); }
-      else if (ds.k === "dob" || ds.k === "weeks") render(true);
+      else if (ds.k === "dob" || ds.k === "weeks" || ds.k === "partoDate") render(true);
     } else if (ds.e) {
       if (el.type === "checkbox") draft[ds.e] = el.checked; else if (choice) draft[ds.e] = el.value;
       if (ds.e === "tol" || ds.e === "ram" || ds.e === "type") render(true);
@@ -4326,7 +4693,10 @@ const HBFua = (() => {
     const b = e.target.closest("[data-act]");
     if (!b) { if (e.target.id === "modal") closeModal(); return; }
     const a = b.dataset.act;
-    if (a === "route") setRoute(b.dataset.to, true);
+    if (a !== "mas" && b.closest("#modal .sheet")) closeModal();   // menú Más: se cierra y ejecuta la acción de siempre
+    if (a === "mas") UX.more();
+    else if (a === "registrar") UX.register();
+    else if (a === "route") setRoute(b.dataset.to, true);
     else if (a === "open") openPatient(b.dataset.id);
     else if (a === "new-patient") newPatient();
     else if (a === "more") { listLimit += 60; render(false); }
@@ -4374,8 +4744,8 @@ const HBFua = (() => {
     else if (a === "copy-report") copyText(reportTxt(), "Informe copiado.", "Informe del periodo");
     else if (a === "dl-report") download(repFile("txt"), reportTxt(), "Informe del periodo");
     else if (a === "dl-csv") download(repFile("csv"), C.csvMonth(Store.list(), reportPeriod()), "Atenciones del periodo (CSV)");
-    else if (a === "backup") { backupData().then((exp) => { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(exp, null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }); }
-    else if (a === "restore") $("imp").click();
+    else if (a === "backup") { backupData("completo").then((exp) => { Store.setMeta("lastBackup", C.today()); download("respaldo_" + C.prof().id + "_" + C.today() + ".json", JSON.stringify(exp, null, 1), "Respaldo de todos los pacientes (JSON)"); render(false); }); }
+    else if (a === "restore") confirmBox("¿Restaurar un respaldo? Los pacientes del archivo se suman a los de este equipo; si un paciente está en ambos, queda la versión más reciente. Antes se guarda una copia del estado actual.", "Elegir archivo", () => $("imp").click());
     else if (a === "retry") Store.retry();
     else if (a === "his-save") {
       const ev = cur.events.find((e) => e.id === cur.hisFor); if (!ev) return;
@@ -4396,6 +4766,8 @@ const HBFua = (() => {
     }
     else if (a === "rg-day") { const d = regDate || C.today(); regDownload(d, d); }
     else if (a === "rg-per") { const pp = currentPeriod(); regDownload(pp.from, pp.to); }
+    else if (a === "su-add") suspAdd();
+    else if (a === "su-restart") suspRestart();
     else if (a === "ses-new") sesNew();
     else if (a === "ses-save") sesSave();
     else if (a === "ses-cancel") { sesD = sesBlank(); render(false); }
@@ -4426,6 +4798,60 @@ const HBFua = (() => {
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("downloads").then((d) => { DL = d; }).catch(() => {});
   }
+  /* ================= Presentación (v2.17 rediseño): Más, Registrar, secciones plegables, teclado ================= */
+  const UX = (() => {
+    const closed = new Set();   // secciones plegadas por la persona (solo en esta sesión)
+    const ico = (d) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
+    function more() {
+      const item = (attrs, icon, title, sub) => `<button type="button" class="sheet-item" ${attrs}>${ico(icon)}<span><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span></button>`;
+      $("modal-body").innerHTML = `<div class="sheet"><h2>Más opciones</h2>
+        ${item('data-act="route" data-to="sesiones" id="mas-sesiones"', '<path d="M4 5h16v11H8l-4 3z"/><path d="M8 9h8M8 12h5"/>', "Sesiones educativas", "Registro, asistentes y fotos de la lista")}
+        ${item('data-act="ses-new" id="mas-ses-new"', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>', "Registrar sesión educativa", "")}
+        ${item('data-act="backup" id="mas-backup"', '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19h14"/>', "Respaldo completo", "Pacientes, configuración y fotos")}
+        ${item('data-act="restore" id="mas-restore"', '<path d="M12 20V9M7.5 13.5 12 9l4.5 4.5"/><path d="M5 5h14"/>', "Restaurar respaldo", "Pide confirmación antes de elegir el archivo")}
+        ${item('data-act="route" data-to="ajustes" id="mas-ajustes"', '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/>', "Ajustes", "Activación, seguridad, FUA, laboratorio, correo diario y periodos")}
+        <div class="actions"><button class="btn" id="m-no">Cerrar</button></div></div>`;
+      $("modal").hidden = false; $("modal").classList.add("as-sheet");
+      $("m-no").onclick = closeModal; $("mas-sesiones").focus({ preventScroll: true });
+    }
+    function register() {
+      if (route === "paciente" && cur && !cur.example) { ptab = "atenciones"; draftToday(); setRoute("paciente", true); const f = $("e-hb"); if (f && matchMedia("(min-width: 761px)").matches) f.focus({ preventScroll: true }); return; }
+      setRoute("pacientes", true);
+      const qi = document.querySelector("#view [data-q]"); if (qi) { qi.focus(); toast("Busque al paciente o use «Nuevo paciente»."); }
+    }
+    const keyOf = (h) => route + "/" + (route === "paciente" ? ptab : "") + "/" + h.textContent.replace(/\(\d+\)/g, "").replace(/\s+/g, " ").trim();
+    function sections() {
+      const v = $("view"); if (!v || !["paciente", "reporte", "ajustes"].includes(route)) return;
+      const secs = Array.from(v.querySelectorAll(":scope > section.card")).filter((s) => { const h = s.firstElementChild; return h && /^H[23]$/.test(h.tagName) && s.children.length > 1; });
+      secs.forEach((s, i) => {
+        const h = s.firstElementChild, k = keyOf(h); s.classList.add("sec"); s.id = s.id || "sec-" + i;
+        h.setAttribute("role", "button"); h.tabIndex = 0; h.dataset.sec = k;
+        const off = closed.has(k); s.classList.toggle("sec-off", off); h.setAttribute("aria-expanded", String(!off));
+      });
+      if (route === "reporte") {   // el informe es una sola tarjeta larga: índice por sus subtítulos
+        Array.from(v.querySelectorAll(".rep > h3")).forEach((h, i) => { h.id = h.id || "rep-h" + i; secs.push({ id: h.id, firstElementChild: h, before: () => {} }); });
+      }
+      if (secs.length >= 4) {
+        const nav = document.createElement("nav"); nav.className = "secidx"; nav.setAttribute("aria-label", "Ir a una sección");
+        nav.innerHTML = secs.map((s) => `<button type="button" data-secgo="${esc(s.id)}">${esc(s.firstElementChild.textContent.replace(/\s+/g, " ").trim())}</button>`).join("");
+        const first = v.querySelector(":scope > section.card"); if (first) first.before(nav);
+      }
+    }
+    document.addEventListener("click", (e) => {
+      const go = e.target.closest("[data-secgo]");
+      if (go) { const s = $(go.dataset.secgo); if (s) { if (s.classList.contains("sec-off")) toggle(s.firstElementChild); s.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } return; }
+      const h = e.target.closest("[data-sec]"); if (h && !e.target.closest("[data-act],a,input,select,textarea,label")) toggle(h);
+    });
+    document.addEventListener("keydown", (e) => { const h = e.target.closest && e.target.closest("[data-sec]"); if (h && e.target === h && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(h); } });
+    function toggle(h) { const s = h.parentElement, off = !s.classList.contains("sec-off"); s.classList.toggle("sec-off", off); h.setAttribute("aria-expanded", String(!off)); if (off) closed.add(h.dataset.sec); else closed.delete(h.dataset.sec); }
+    // Teclado abierto en el teléfono: la barra inferior se oculta para no tapar el campo
+    const vv = window.visualViewport;
+    const kb = () => { const f = document.activeElement, field = f && /^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName) && !/^(checkbox|radio|button|file)$/.test(f.type || "");
+      document.documentElement.classList.toggle("kb", !!(field && vv && window.innerHeight - vv.height > 140)); };
+    if (vv) vv.addEventListener("resize", kb);
+    document.addEventListener("focusin", () => setTimeout(kb, 250)); document.addEventListener("focusout", () => setTimeout(kb, 250));
+    return { more, register, sections };
+  })();
   window.AnemiaApp = { Store, openPatient, newPatient, saveEvent, back, setDraft: (o) => { Object.assign(draft, o); }, cur: () => cur };
   applyProfile();
   // Con PIN, los pacientes no se leen ni se muestran hasta desbloquear (en la web, después de verificar la clave guardada)

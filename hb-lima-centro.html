@@ -712,6 +712,9 @@ nav.tabs.sub button { min-width: 44px; padding-left: 4px; padding-right: 4px; fo
 @media (max-width: 359px) { nav.tabs.sub button { font-size: 11.5px; } }
 /* Con «Reintentar» el estado baja a su propia línea en pantallas angostas, para no apretar el nombre */
 @media (max-width: 430px) { header.top:has(.status button) .status { grid-column: 1 / -1; justify-self: start; } }
+/* Ficha: subtítulos de primera y última Hb */
+.card h3.hbsub { font-size: 15px; font-weight: 650; margin: 4px 0 -4px; color: var(--ink); }
+.card h3.hbsub ~ h3.hbsub { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
 
 .brand { display: flex; flex-direction: column; gap: 4px; }
 </style>
@@ -2383,7 +2386,7 @@ const HBFua = (() => {
   const blankHis = () => ({ dx: "auto", dxType: "D", dxLab: "auto", hbMethod: "85018.01", supp: "auto", suppLab: "1", acts: [], labs: [], tiLab: "1", otros: [], teleLab: "" });
   const blankPatient = () => ({ id: "", ym: "", createdDate: C.today(), updated: 0, name: "", hc: "", dob: "", dni: "", address: "", altitude: "", email: "", phone1: "", phone2: "",
     refName: "", refPhone: "", sex: "F", weight: "", height: "", allergy: "no", allergyText: "", preg: false, puerp: false, fertile: false, preterm: false,
-    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", modalidad: "intramural", seguro: "SIS", padron: "", hisFor: "", events: [], his: blankHis() });
+    weeks: "", weeksDate: "", trimester: "", hb: "", hbDate: C.today(), hbUlt: "", hbUltFecha: "", mode: "treatment", start: C.today(), notes: "", motherId: "", altoRiesgo: false, altoRiesgoTxt: "", madreNombre: "", madreDni: "", acompNombre: "", acompParentesco: "Madre", modalidad: "intramural", seguro: "SIS", padron: "", hisFor: "", events: [], his: blankHis() });
   // Modalidad de la atención elegida al inicio de la ficha: intramural, extramural, teleconsulta o telemonitoreo
   const MODS = [["intramural", "Consulta intramural"], ["extramural", "Consulta extramural"], ["teleconsulta", "Teleconsulta"], ["telemonitoreo", "Telemonitoreo"]];
   const modType = (m) => (m === "teleconsulta" ? "Teleconsulta" : m === "telemonitoreo" ? "Telemonitoreo" : C.mainType());
@@ -2710,6 +2713,30 @@ const HBFua = (() => {
     const w = C.num(p.weight), h = C.num(p.height), bmi = w && h ? w / Math.pow(h / 100, 2) : null;
     const withHb = p.events.filter((e) => e.hbAdj != null && !(e.date === p.hbDate && e.hb === obs)).sort(C.byDate), last = withHb.length ? withHb[withHb.length - 1] : null;
     return { p, pv, age, g, alt, obs, hbAdj, cls, pl, bmi, last };
+  }
+  // Primera Hb (diagnóstico) y última Hb, cada una clasificada con la edad, la gestación y la altitud de su fecha
+  function hbCls(p, hbStr, date) {
+    const hb = C.num(hbStr); if (hb == null) return null;
+    const d = C.parseDate(date) && date <= C.today() ? date : C.today();
+    const pv = C.viewAt(p, d), age = C.ageAt(p.dob, d), g = C.groupOf(age, pv), adj = C.hbAdjusted(hb, C.num(p.altitude));
+    return { hb, date: C.parseDate(date) ? date : "", adj, cls: adj != null && g ? C.classify(g, age, pv, adj) : null };
+  }
+  function lastHb(p) {   // la más reciente entre la última Hb escrita en la ficha y las atenciones con Hb
+    const own = C.num(p.hbUlt) != null && C.parseDate(p.hbUltFecha) ? { hb: p.hbUlt, date: p.hbUltFecha, src: "ficha" } : null;
+    const evs = (p.events || []).filter((e) => C.num(e.hb) != null).map((e) => ({ hb: String(e.hb), date: C.parseDate(e.hbFecha) ? e.hbFecha : e.date, src: "atención" }))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    const ev = evs.length ? evs[evs.length - 1] : null;
+    const r = own && (!ev || own.date >= ev.date) ? own : ev;
+    if (!r || (r.src !== "ficha" && r.date === p.hbDate && C.num(r.hb) === C.num(p.hb))) return null;   // si solo existe la primera Hb, no hay «última»
+    const c = hbCls(p, r.hb, r.date); return c && Object.assign(c, { src: r.src });
+  }
+  // Hb de la ficha que completa la atención: la última si se escribió; si no, la primera
+  const fichaHb = (p) => (C.num(p.hbUlt) != null && C.parseDate(p.hbUltFecha) ? { hb: p.hbUlt, date: p.hbUltFecha } : { hb: p.hb, date: p.hbDate });
+  const clsHtml = (c) => (!c ? "—" : (c.cls ? pill(c.cls) : "Sin clasificar") + (c.adj != null ? ` <span class="muted">ajustada ${C.f1(c.adj)} g/dL</span>` : ""));
+  function lastHbHtml(p) {
+    const L = lastHb(p); if (!L) return "Sin una Hb posterior a la primera.";
+    const warn = C.parseDate(p.hbDate) && L.date && L.date < p.hbDate ? ' <span class="muted">(fecha anterior a la primera Hb: revísela)</span>' : "";
+    return clsHtml(L) + (L.src === "atención" ? ` <span class="muted">· ${C.f1(L.hb)} g/dL del ${fmtDate(L.date)}, de Atenciones</span>` : "") + warn;
   }
   const toneOf = (cls) => (cls.status === "normal" ? "ok" : cls.status !== "anemia" ? "pend" : cls.severity === "Severa" ? "sev" : cls.severity === "Moderada" ? "mod" : "leve");
   const pill = (cls) => `<span class="pill ${toneOf(cls)}">${esc(cls.label)}</span>`;
@@ -3340,10 +3367,20 @@ const HBFua = (() => {
         ${C.parseDate(p.partoDate) ? `<div class="field"><span>Días posparto hoy</span><output>${esc(String(C.daysBetween(p.partoDate, C.today())))}${C.daysBetween(p.partoDate, C.today()) > 42 ? " (puerperio terminado)" : C.daysBetween(p.partoDate, C.today()) > 30 ? " (terminó el esquema preventivo)" : ""}</output></div>` : ""}</div>` : ""}
     </section>
     <section class="card"><h2>Hemoglobina de diagnóstico e intervención</h2>
+      <h3 class="hbsub">Primer registro de hemoglobina</h3>
       <div class="grid">
-        ${inp("hb", "Hb observada (g/dL)", 'type="number" inputmode="decimal" min="0" max="25" step="0.1"', "Valor medido, sin ajustar. Si la deja vacía, se toma de la primera atención con Hb.")}
-        ${inp("hbDate", "Fecha de la Hb", `type="date" max="${C.today()}"`)}
+        ${inp("hb", "Primera Hb observada (g/dL)", 'type="number" inputmode="decimal" min="0" max="25" step="0.1"', "Valor medido, sin ajustar. Si la deja vacía, se toma de la primera atención con Hb. El HIS usa la clasificación de esta Hb.")}
+        ${inp("hbDate", "Fecha de la primera Hb", `type="date" max="${C.today()}"`)}
+        <div class="field"><span>Clasificación de la primera Hb</span><output id="o-hb1cls">${clsHtml(C.num(p.hb) != null ? { cls: D.cls, adj: D.hbAdj } : null)}</output></div>
         <div class="field"><span>Hb ajustada por altitud</span><output id="o-hbadj">${D.hbAdj == null ? "—" : C.f1(D.hbAdj) + " g/dL"}</output></div>
+      </div>
+      <h3 class="hbsub">Última hemoglobina</h3>
+      <div class="grid">
+        ${inp("hbUlt", "Última Hb observada (g/dL)", 'type="number" inputmode="decimal" min="0" max="25" step="0.1"', "Valor medido, sin ajustar. Si la deja vacía, se muestra la última Hb registrada en Atenciones.")}
+        ${inp("hbUltFecha", "Fecha de la última Hb", `type="date" max="${C.today()}"`)}
+        <div class="field"><span>Clasificación de la última Hb</span><output id="o-hbucls">${lastHbHtml(p)}</output></div>
+      </div>
+      <div class="grid">
         <div class="field"><span>Modalidad</span>${modeSeg("fi")}</div>
         ${inp("start", "Fecha de inicio del esquema", 'type="date"')}
       </div>
@@ -3999,7 +4036,8 @@ const HBFua = (() => {
         ${D.age && D.age.years < 18 ? row("Familiar que acude", [p.acompNombre || (p.acompParentesco === "Madre" ? p.madreNombre : ""), p.acompParentesco].filter(Boolean).join(" · ")) + row("Teléfonos del familiar", [p.phone1, p.phone2].filter(Boolean).join(" · ")) + row("Correo del familiar", p.email) + row("Contacto de referencia", "El mismo familiar")
           : row("Teléfono", [p.phone1, p.phone2].filter(Boolean).join(" · ")) + row("Correo", p.email) + row("Contacto de referencia", [p.refName, p.refPhone].filter(Boolean).join(" · "))}${row("Condición", [p.preg ? "Gestante" + (p.weeks ? " (" + p.weeks + " sem.)" : "") : "", p.puerp ? "Puérpera" : "", p.preterm ? "Prematuro o bajo peso al nacer" : "", p.altoRiesgo ? "Alto riesgo de anemia" : ""].filter(Boolean).join(" · "))}
         ${row("Alergias", p.allergy === "si" ? p.allergyText || "Sí" : p.allergy === "no" ? "No" : "")}
-        ${row("Hb de diagnóstico", p.hb ? p.hb + " g/dL" + (p.hbDate ? " el " + fmtDate(p.hbDate) : "") + (D.hbAdj != null ? " · ajustada " + C.f1(D.hbAdj) + " g/dL" : "") : "")}
+        ${row("Primera Hb (diagnóstico)", p.hb ? p.hb + " g/dL" + (p.hbDate ? " el " + fmtDate(p.hbDate) : "") + (D.hbAdj != null ? " · ajustada " + C.f1(D.hbAdj) + " g/dL" : "") + (D.cls && D.cls.label ? " · " + D.cls.label : "") : "")}
+        ${(() => { const L = lastHb(p); return L ? row("Última Hb", C.f1(L.hb) + " g/dL el " + fmtDate(L.date) + (L.adj != null ? " · ajustada " + C.f1(L.adj) + " g/dL" : "") + (L.cls ? " · " + L.cls.label : "")) : ""; })()}
         ${row("Modalidad", p.mode === "prevention" ? "Suplementación preventiva" : "Tratamiento")}${row("Inicio del esquema", p.start ? fmtDate(p.start) : "")}</table>
       <h2>Evaluación</h2><table>${row("Clasificación", D.cls && D.cls.label)}${row("Esquema", D.pl && D.pl.title)}${row("Grupo", C.GROUPS[D.g] || "")}</table>
       <h2>Atenciones (${evs.length})</h2>
@@ -4206,6 +4244,8 @@ const HBFua = (() => {
     const D = derive(cur); renderSummary(D);
     const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
     set("o-age", C.ageLabel(D.age)); set("o-bmi", D.bmi ? C.f1(D.bmi) : "—"); set("o-hbadj", D.hbAdj == null ? "—" : C.f1(D.hbAdj) + " g/dL"); set("o-gest", gestNow(D));
+    const h1 = $("o-hb1cls"); if (h1) h1.innerHTML = clsHtml(C.num(cur.hb) != null ? { cls: D.cls, adj: D.hbAdj } : null);
+    const hu = $("o-hbucls"); if (hu) hu.innerHTML = lastHbHtml(cur);
   }
   function setRoute(r, push) {
     const next = ROUTES.includes(r) ? r : "inicio";
@@ -4295,8 +4335,9 @@ const HBFua = (() => {
     }
     // Datos tomados en la ficha el mismo día (Hb, peso y talla) completan la atención si se dejaron vacíos
     const fichaDay = date === fichaTarget(p) && d.i == null;
-    const hb = C.num(d.hb) != null ? C.num(d.hb) : fichaDay && C.num(p.hb) != null && !p.events.some((e) => C.num(e.hb) === C.num(p.hb) && (e.date === p.hbDate || e.hbFecha === p.hbDate)) ? C.num(p.hb) : null;
-    const hbFecha = C.num(d.hb) != null ? d.hbFecha || "" : hb != null && p.hbDate !== date ? p.hbDate : "";
+    const fh = fichaHb(p);
+    const hb = C.num(d.hb) != null ? C.num(d.hb) : fichaDay && C.num(fh.hb) != null && !p.events.some((e) => C.num(e.hb) === C.num(fh.hb) && (e.date === fh.date || e.hbFecha === fh.date)) ? C.num(fh.hb) : null;
+    const hbFecha = C.num(d.hb) != null ? d.hbFecha || "" : hb != null && fh.date !== date ? fh.date : "";
     const w = C.num(d.weight) != null ? C.num(d.weight) : fichaDay ? C.num(p.weight) : null, h = C.num(d.height) != null ? C.num(d.height) : fichaDay ? C.num(p.height) : null, adh = C.num(d.adherence);
     const others = p.events.filter((e, i) => i !== d.i);
     const firstHb = hb != null && (p.hb === "" || p.hb == null);
@@ -4313,7 +4354,8 @@ const HBFua = (() => {
     const anemia = cls.status === "anemia" ? true : cls.status === "normal" ? false : null;
     const had = others.filter((e) => e.dx && e.date <= date).sort(C.byDate).pop();
     let dx = d.dx === "none" ? "" : d.dx;
-    if (dx === "auto") dx = had && p.mode === "treatment" ? had.dx : anemia ? (g === "gest" ? "O990" : "D649") : "";
+    const anemia1 = D.cls && D.cls.status === "anemia";   // HIS: el diagnóstico sigue a la primera Hb (diagnóstico); si no hay anemia en ella, a la Hb de esta atención
+    if (dx === "auto") dx = had && p.mode === "treatment" ? had.dx : anemia1 || anemia ? (g === "gest" ? "O990" : "D649") : "";
     const ds = p.mode === "treatment" && C.parseDate(p.start) ? C.daysBetween(p.start, date) : null;
     const pl = C.plan(g, age, pv, D.cls.status === "pend" ? cls : D.cls, p.mode);
     const ev = { id: d.i != null ? p.events[d.i].id : newId("e"), date, type: d.type, hb, hbFecha: hb != null && C.parseDate(hbFecha) && hbFecha !== date ? hbFecha : "", hbAdj, clsLabel: hbAdj == null ? "" : cls.label, sev: hbAdj == null ? "" : (cls.his || ""), anemia, g, am: age ? age.months : null,
@@ -4330,7 +4372,8 @@ const HBFua = (() => {
     if (d.i != null) p.events[d.i] = ev; else p.events.push(ev);
     if (date === t && (ev.type === C.mainType() || ev.type === "Teleconsulta" || ev.type === "Telemonitoreo")) p.modalidad = modOf(ev);
     const act = ACT_OF[d.type];
-    p.his = Object.assign(blankHis(), { dx: dx || "", dxType: others.some((e) => e.dx === dx && e.date <= date) ? "R" : "D", dxLab: dx === "D649" ? "" : cls.his && (dx === "D509" || dx === "O990") ? cls.his : "auto",
+    const hisSev = (D.cls && D.cls.status === "anemia" && D.cls.his) || cls.his;   // HIS: clasificación de la primera Hb (si aún no hay, la de esta atención)
+    p.his = Object.assign(blankHis(), { dx: dx || "", dxType: others.some((e) => e.dx === dx && e.date <= date) ? "R" : "D", dxLab: dx === "D649" ? "" : hisSev && (dx === "D509" || dx === "O990") ? hisSev : "auto",
       hbMethod: hb != null ? "85018.01" : "", labs: d.orders.filter((k) => (C.LABS.find((l) => l[0] === k) || [])[2]), acts: act ? [act] : [], supp: p.his.supp, suppLab: p.his.suppLab, otros: clone(ev.dxOtros), teleLab: teleLabOf(p, ev), tiLab: p.his.tiLab });
     p.hisFor = ev.id; ev.his = hisSnapshot(p);
     draft = blankDraft(); dOpen = {}; fuaD = null; Store.save(p); render(false);
@@ -4366,7 +4409,7 @@ const HBFua = (() => {
   // Atención donde caen los datos de la ficha: la del día de la Hb si ya existe; si la Hb es de los últimos 30 días, la de hoy
   // (la consulta en que se llenó la ficha); una Hb más antigua queda solo como antecedente de la ficha
   function fichaTarget(p) {
-    const hd = C.parseDate(p.hbDate) ? p.hbDate : "", t = C.today();
+    const fh = fichaHb(p), hd = C.parseDate(fh.date) ? fh.date : "", t = C.today();
     if (hd && p.events.some((e) => e.date === hd)) return hd;
     if (!hd || hd === t) return t;
     const ago = C.daysBetween(hd, t);
@@ -4374,25 +4417,25 @@ const HBFua = (() => {
   }
   function syncFicha(what) {
     const p = cur; if (!p || p.example || !C.parseDate(p.dob)) return;
-    const hb = C.num(p.hb), w = C.num(p.weight), h = C.num(p.height);
+    const fh = fichaHb(p), hb = C.num(fh.hb), w = C.num(p.weight), h = C.num(p.height);
     const date = fichaTarget(p);
     const i = p.events.findIndex((e) => e.date === date);
     if (i < 0 && hb == null) return;                       // sin Hb no se crea una atención solo por el peso
     if (i < 0 && date !== C.today() && !p.events.length) return;   // Hb antigua sin atenciones: solo antecedente
     const e = i >= 0 ? p.events[i] : null;
-    const hf = C.parseDate(p.hbDate) && p.hbDate !== date ? p.hbDate : "";
+    const hf = C.parseDate(fh.date) && fh.date !== date ? fh.date : "";
     const same = e && (hb == null || (C.num(e.hb) === hb && (e.hbFecha || "") === hf)) && (w == null || C.num(e.weight) === w) && (h == null || C.num(e.height) === h);
     if (same) return;
     const keep = draft, keepTab = ptab, keepFua = fuaI;
     const d = i >= 0 ? draftFromEvent(i) : Object.assign(blankDraft(), { date, dx: "auto" });
-    if (hb != null) { d.hb = String(hb); d.hbFecha = C.parseDate(p.hbDate) && p.hbDate !== date ? p.hbDate : ""; }
+    if (hb != null) { d.hb = String(hb); d.hbFecha = hf; }
     if (w != null) d.weight = String(w);
     if (h != null) d.height = String(h);
     draft = d;
     saveEvent();
     if (keep && keep.i == null && keep.date !== date) draft = keep;
     ptab = keepTab; fuaI = keepFua; fuaD = null; render(false);
-    toast((what === "hb" ? "Hb" + (C.parseDate(p.hbDate) ? " del " + fmtDate(p.hbDate) : "") : "Peso y talla") + (i < 0 ? ": atención del " + fmtDate(date) + " creada" : " actualizados") + " en Evaluación, Atenciones, HIS y FUA.");
+    toast((what === "hb" ? "Hb" + (C.parseDate(fh.date) ? " del " + fmtDate(fh.date) : "") : "Peso y talla") + (i < 0 ? ": atención del " + fmtDate(date) + " creada" : " actualizados") + " en Evaluación, Atenciones, HIS y FUA.");
   }
 
   /* ================= Diálogos y archivos ================= */
@@ -4649,7 +4692,7 @@ const HBFua = (() => {
     if (ds.fu && fuaD && choice) { fuaSet(ds.fu, el.type === "checkbox" ? el.checked : el.value); if (ds.fu === "destino" || ds.fu === "prest") render(true); else updateFuaCheck(); return; }
     if (ds.fc && choice) { const c = Object.assign({}, Store.meta().fuaCfg || {}); c[ds.fc] = el.value; Store.setMeta("fuaCfg", c); return; }
     if (ds.k && cur) {
-      if (ds.k === "hb" || ds.k === "hbDate") { setP(ds.k, el.value); setTimeout(() => syncFicha("hb"), 0); }
+      if (ds.k === "hb" || ds.k === "hbDate" || ds.k === "hbUlt" || ds.k === "hbUltFecha") { setP(ds.k, el.value); refresh(); setTimeout(() => syncFicha("hb"), 0); }
       if (ds.k === "weight" || ds.k === "height") { setP(ds.k, el.value); setTimeout(() => syncFicha("wh"), 0); }
       if (ds.k === "dob" && C.num(cur.hb) != null) setTimeout(() => syncFicha("hb"), 0);
       if (ds.k === "modalidad") { setP("modalidad", el.value); applyMod(); return; }
